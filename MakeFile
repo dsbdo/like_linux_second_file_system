@@ -1,0 +1,11 @@
+
+FileProcess.o: ./FileProcess/FileProcess.cpp
+g++ -c ./FileProcess/FileProcess.cpp
+
+InitMoudle.o: ./InitMoudle/InitMoudle.cpp
+g++ -c ./InitMoudle/InitMoudle.cpp ./FileProcess/FileProcess.cpp
+
+main.o: main.cpp
+g++ -c main.cpp ./InitMoudle/InitMoudle.cpp ./FileProcess/FileProcess.cpp
+main: main.o, FileProcess.o, InitMoudle.o
+	g++ main.o InitMoudle.o FileProcess.o -o test.out
