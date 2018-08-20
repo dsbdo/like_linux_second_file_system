@@ -9,6 +9,14 @@
 const char* K_SYSTEM_FILE = "SystemDisk";
 bool inode_bitmap[K_INODE_NUM];
 bool block_bitmap[K_BLOCK_NUM];
+
+int  g_root_dir_inode_addr;
+char g_current_user_name[100];
+char g_current_host_name[100];
+char g_current_group_name[100];
+char g_current_user_dir_name[100];
+
+
 int main(int argc, char** argv) {
 	using std::cout;
 	using std::cin;
@@ -24,7 +32,7 @@ int main(int argc, char** argv) {
 		cout << "File is not exist, 重新构建虚拟磁盘" << endl; 
 		system("dd if=/dev/zero of=SystemDisk bs=1G count=1");
 		InitMoudle init_moudle;
-		//UserMoudle user_moudle();
+		//UserMoudle user_moudle;
 		//初始化磁盘
 		int init_result	= init_moudle.initDisk();
 		if(init_result == 0) {

@@ -6,6 +6,7 @@
 #define _INITMOUDLE_H
 #include<iostream>
 #include<fstream>
+#include<ctime>
 #include "../FileProcess/FileProcess.h"
 #include "../common.h"
 class InitMoudle {
@@ -14,10 +15,13 @@ class InitMoudle {
 		//~InitMoudle();
 		int initDisk();
 		
+		//启动文件系统，读取超级块， bitmap等信息进入内存
+		void bootFileSyatem();
+		
 	private:
-		bool initSupreBlock();
+		bool initSuperBlock();
 		bool initInodeBitMap();
-		bool initBLockBitMap();
+		bool initBlockBitMap();
 		//创建根目录
 		bool createRootDir();
 		FileProcess m_file_process;
