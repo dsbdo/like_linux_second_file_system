@@ -5,6 +5,8 @@
 #include<fstream>
 #include<cstdlib>
 #include<cstring>
+#include<string.h>
+
 
 
 

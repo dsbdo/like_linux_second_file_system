@@ -47,7 +47,7 @@ bool InitMoudle::initSuperBlock()
 	{
 		std::cout << "write block success, test write" << std::endl;
 		//m_file_process.testWriteResult();
-			return true;
+		return true;
 	}
 	else
 	{

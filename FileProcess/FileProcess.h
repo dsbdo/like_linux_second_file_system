@@ -36,7 +36,7 @@ class FileProcess {
 		void loadSuperBlock();
 
 		//读操作
-		void readInode(Inode*& inode_item, int inode_addr);
+		void readInode(Inode* inode_item, int inode_addr);
 		void readBlock(char*& block_buf,int block_addr);
 
 		bool mkdir(int parent_inode_addr, const char name[]);
@@ -50,7 +50,7 @@ class FileProcess {
 
 		bool testWriteResult();
 		void testWriteBlock(int block_addr);
-		void testWriteInode(int inode_addr);
+		void testWriteInode(int inode_addr );
 		void coutBitmap();
 		
 	private:

@@ -1,6 +1,7 @@
 
 #include <fstream>
 #include <iostream>
+#include<string.h>
 #include "FileProcess.h"
 FileProcess::FileProcess()
 {
@@ -368,7 +369,7 @@ bool FileProcess::freeInode(int inode_addr)
 	}
 }
 
-void FileProcess::readInode(Inode *&inode_item, int inode_addr)
+void FileProcess::readInode(Inode *inode_item, int inode_addr)
 {
 	using std::cout;
 	using std::endl;
@@ -377,7 +378,7 @@ void FileProcess::readInode(Inode *&inode_item, int inode_addr)
 	//读取出512字节
 	char buf[K_INODE_SIZE];
 	disk_head.read(buf, K_INODE_SIZE);
-	inode_item = (Inode *)buf;
+	memcpy(inode_item, buf, K_BLOCK_SIZE);
 	cout << "test read Inode: " << endl;
 	
 	cout << "test inode item inode num: " << inode_item->i_Inode_num << endl;
@@ -411,7 +412,9 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 	DirItem dirlist[28];
 
 	Inode *current_inode = new Inode();
+
 	readInode(current_inode, parent_inode_addr);
+
 	testWriteInode(parent_inode_addr);
 	std::cout << "DEBUG test in call mkdir function: " << current_inode->i_Inode_num << std::endl;
 
