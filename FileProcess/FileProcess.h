@@ -16,7 +16,7 @@ class FileProcess {
 		
 		//按block 写入文件
 		bool writeFile(char content[],int block_addr, int size_byte);
-		bool writeBlockFile(char content[], int block_addr, int size_byte);
+		bool writeBlockFile(char content[], int block_addr, int size_byte=K_BLOCK_SIZE);
 		bool writeInode(char content[], int inode_addr, int size_byte = K_INODE_SIZE);
 
 		bool setInodeBitmap(int);
@@ -39,13 +39,14 @@ class FileProcess {
 		void readInode(Inode*& inode_item, int inode_addr);
 		void readBlock(char*& block_buf,int block_addr);
 
-		bool mkdir(int parent_inode_addr, char name[]);
+		bool mkdir(int parent_inode_addr, const char name[]);
 		//删除当前目录下的所有文件
 		void rmall(int parent_inode_addr);
-		void rmdir(int parent_inode_addr, char name[]);
+		bool rmdir(int parent_inode_addr, char name[]);
 		bool create(int parent_inode_addr, char name[], char buf[]);
 		bool del(int parent_inode_addr, char name[]);
-
+		void ls(int);
+		void cd(int, char name[]);
 
 		bool testWriteResult();
 		void testWriteBlock(int block_addr);
@@ -59,6 +60,6 @@ class FileProcess {
 	  	bool m_inode_bitmap[K_INODE_NUM];
 		bool m_block_bitmap[K_BLOCK_NUM]; 
 		char buf_4KB[1024*4];
-		SuperBlock* m_super_block
+		SuperBlock* m_super_block;
 };
 #endif

@@ -1,4 +1,5 @@
 #include <cstring>
+#include<memory.h>
 #include "InitMoudle.h"
 
 //InitMoudle::InitMoudle(){}
@@ -11,7 +12,9 @@ int InitMoudle::initDisk()
 	initSuperBlock();
 	initInodeBitMap();
 	initBlockBitMap();
+
 	m_file_process.loadBitMap();
+
 	createRootDir();
 	return 0;
 }
@@ -43,7 +46,7 @@ bool InitMoudle::initSuperBlock()
 	if (write_result)
 	{
 		std::cout << "write block success, test write" << std::endl;
-		m_file_process.testWriteResult();
+		//m_file_process.testWriteResult();
 			return true;
 	}
 	else
@@ -108,11 +111,10 @@ bool InitMoudle::createRootDir() {
 	strcpy(dirlist[1].itemName, "..");
 	int block_addr = m_file_process.allocBlock();
 	int inode_addr = m_file_process.allocInode();
-		std::cout <<  "alloc inode num for root dir is: " << inode_addr << std::endl;
-		std::cout << "alloc block num for root dir is: " << block_addr << std::endl;
+	std::cout <<  "alloc inode num for root dir is: " << inode_addr << std::endl;
+	std::cout << "alloc block num for root dir is: " << block_addr << std::endl;
 	if(block_addr != -1 && inode_addr != -1) {
 		//能够分配到正确的节点地址
-
 		dirlist[0].inode_addr = inode_addr;
 		dirlist[1].inode_addr = inode_addr;
 		//写磁盘 132 * 4 * 4  < 1024 *4
@@ -155,8 +157,6 @@ bool InitMoudle::createRootDir() {
 		m_file_process.writeInode((char*)&root_dir_inode, inode_addr);
 
 
-				
-		
 		/*
 		*
 		* 测试函数
@@ -166,6 +166,25 @@ bool InitMoudle::createRootDir() {
 		*
 		* 测试函数结束
 		*/
+
+		//根目录创建成功，配备其他文件目录
+
+		m_file_process.mkdir(root_dir_inode.i_Inode_num, "home");
+		std::cout << "********************test mkdir home*************************" << std::endl;
+			
+			m_file_process.testWriteInode(inode_addr);
+
+			m_file_process.testWriteBlock(block_addr);
+
+		//m_file_process.mkdir(root_dir_inode.i_Inode_num, "etc");
+//std::cout << "********************test mkdir etc*************************" << std::endl;
+			//m_file_process.testWriteInode(inode_addr);
+
+
+		    //m_file_process.testWriteBlock(block_addr);
+
+
+		return true;
 	}
 	else {
 		std::cout << "create root dir fail!" << std::endl;
@@ -175,7 +194,7 @@ bool InitMoudle::createRootDir() {
 }
 
 //文件系统启动
-void InitMoudle::bootFileSyatem(){
+void InitMoudle::bootFileSystem(){
 	//读取超级块
 	m_file_process.loadSuperBlock();
 	//加载位图

@@ -16,7 +16,7 @@ class InitMoudle {
 		int initDisk();
 		
 		//启动文件系统，读取超级块， bitmap等信息进入内存
-		void bootFileSyatem();
+		void bootFileSystem();
 		
 	private:
 		bool initSuperBlock();

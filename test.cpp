@@ -1,5 +1,6 @@
 #include<fstream>
 #include<iostream>
+#include<string>
 using namespace std;
 
 int main() {
@@ -44,5 +45,11 @@ int main() {
 	int inode_addr;
      };
      cout << sizeof(DirItem);
+     cout << endl;
+     string str_a, str_b;
+     cin >> str_a;
+     cin >> str_b;
+     cout << str_a << " now is B " << str_b << endl; 
+
     return 0;
 }

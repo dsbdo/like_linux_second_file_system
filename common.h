@@ -14,6 +14,8 @@
 #define DIR_DEF_PERMISSION	0755			//目录默认权限
 //fstream disk_head;
 extern const char* K_SYSTEM_FILE;
+extern int g_current_dir_addr;
+
 const int K_BLOCK_SIZE = 1024*4; //每一个block 为 4KB
 
 const int K_INODE_SIZE = 512; //每一个inode大小
@@ -67,7 +69,8 @@ extern char g_current_user_name[100];
 extern char g_current_host_name[100];
 extern char g_current_group_name[100];
 extern char g_current_user_dir_name[100];
-
+extern char g_current_dir_name[100];
+extern bool g_is_login;
 //数据块起始地址
 //声明superblock 数据结构
 struct SuperBlock {
