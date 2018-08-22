@@ -17,9 +17,6 @@ class UserMoudle {
 		bool deleteUser(std::string user_name);
 	private:
 		bool flag;
-		
-		
-
 };
 
 #endif

@@ -10,15 +10,16 @@ const char *K_SYSTEM_FILE = "SystemDisk";
 bool inode_bitmap[K_INODE_NUM];
 bool block_bitmap[K_BLOCK_NUM];
 
-int g_root_dir_inode_addr;
+int g_root_dir_inode_addr = 0;
 char g_current_user_name[100] = "root";
 char g_current_host_name[100] = "dsbdo_host";
 char g_current_group_name[100] = "root_group";
 char g_current_user_dir_name[100] = "/";
-char g_current_dir_name[100] ="home";
+char g_current_dir_name[100] ="/";
+int g_current_dir_inode_addr = 0;
 int g_current_dir_addr;
 bool g_is_login = false;
-
+int g_root_inode_addr = 0;
 int main(int argc, char **argv)
 {
 	using std::cin;

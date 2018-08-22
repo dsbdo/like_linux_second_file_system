@@ -143,7 +143,7 @@ bool InitMoudle::createRootDir() {
 
 		strcpy(root_dir_inode.i_uname, g_current_user_name);
 		strcpy(root_dir_inode.i_gname, g_current_group_name);
-		root_dir_inode.i_counter = 1;
+		root_dir_inode.i_counter = 2;
 		root_dir_inode.i_dirBlock[0] = block_addr;
 		for(int i = 1; i < 12; i++) {
 			root_dir_inode.i_dirBlock[i] = -1;
@@ -176,14 +176,23 @@ bool InitMoudle::createRootDir() {
 
 			m_file_process.testWriteBlock(block_addr);
 
-		//m_file_process.mkdir(root_dir_inode.i_Inode_num, "etc");
-//std::cout << "********************test mkdir etc*************************" << std::endl;
-			//m_file_process.testWriteInode(inode_addr);
+		m_file_process.mkdir(root_dir_inode.i_Inode_num, "etc");
+		std::cout << "********************test mkdir etc*************************" << std::endl;
+			m_file_process.testWriteInode(inode_addr);
+		    m_file_process.testWriteBlock(block_addr);
+		    m_file_process.cd(g_root_dir_inode_addr,"etc");
+			m_file_process.ls(g_root_dir_inode_addr);
+			m_file_process.cd(g_current_dir_inode_addr,"..");
+			m_file_process.create(g_root_dir_inode_addr,"dsbdo.sys", "china is a great couintry");
+			m_file_process.del(g_root_dir_inode_addr, "dsbdo.sys");
+			
+			m_file_process.cd(g_root_dir_inode_addr,"etc");
+			m_file_process.mkdir(g_current_dir_inode_addr, "test_dir");
+			m_file_process.create(g_current_dir_inode_addr,"dsbdo.sys", "china is a great couintry");
+			m_file_process.del(g_current_dir_addr, "dsbdo.sys");
 
-
-		    //m_file_process.testWriteBlock(block_addr);
-
-
+			//m_file_process.rmall();
+			m_file_process.rmdir(g_root_dir_inode_addr,"etc");
 		return true;
 	}
 	else {

@@ -37,7 +37,7 @@ class FileProcess {
 
 		//读操作
 		void readInode(Inode* inode_item, int inode_addr);
-		void readBlock(char*& block_buf,int block_addr);
+		void readBlock(char* block_buf,int block_addr);
 
 		bool mkdir(int parent_inode_addr, const char name[]);
 		//删除当前目录下的所有文件
@@ -47,10 +47,15 @@ class FileProcess {
 		bool del(int parent_inode_addr, char name[]);
 		void ls(int);
 		void cd(int, char name[]);
+		
+		//打开文件并编辑
+		void vi(int file_inode_addr);
+		
 
 		bool testWriteResult();
-		void testWriteBlock(int block_addr);
+		void testWriteBlock(int block_addr, int type = 1);
 		void testWriteInode(int inode_addr );
+
 		void coutBitmap();
 		
 	private:

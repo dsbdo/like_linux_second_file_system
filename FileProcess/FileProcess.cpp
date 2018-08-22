@@ -1,7 +1,7 @@
 
 #include <fstream>
 #include <iostream>
-#include<string.h>
+#include <string.h>
 #include "FileProcess.h"
 FileProcess::FileProcess()
 {
@@ -10,6 +10,7 @@ FileProcess::FileProcess()
 	disk_head.open(K_SYSTEM_FILE, ios::in | ios::out | ios::binary);
 	m_free_block_num = K_BLOCK_NUM - 82;
 	m_free_inode_num = K_INODE_NUM;
+	//m_current_inode = new Inode();
 }
 
 FileProcess::~FileProcess()
@@ -25,15 +26,6 @@ bool FileProcess::writeFile(char content[], int block_addr, int size_byte)
 	disk_head.write(content, size_byte);
 	if (disk_head.good())
 	{
-		//写入文件成功，打印写入的内容
-		// for (int i = 0; i < 512; i++)
-		// {
-		// 	cout << content[i] << " " << endl;
-		// 	if ((i + 1) % 32 == 0)
-		// 	{
-		// 		cout << endl;
-		// 	}
-		// }
 		cout << "写入成功" << endl;
 		return true;
 	}
@@ -42,8 +34,6 @@ bool FileProcess::writeFile(char content[], int block_addr, int size_byte)
 		cout << "写入失败" << endl;
 		return false;
 	}
-
-	//}
 }
 
 bool FileProcess::writeBlockFile(char content[], int block_addr, int size_byte)
@@ -96,7 +86,7 @@ bool FileProcess::writeInode(char content[], int inode_addr, int size_byte)
 	if (disk_head.good())
 	{
 		//修改m_inode_bit_map, 并更新磁盘中的inode bitmap
-		m_inode_bitmap[inode_addr] = 1;
+
 		setInodeBitmap(inode_addr);
 		std::cout << "write inode success" << std::endl;
 	}
@@ -377,24 +367,27 @@ void FileProcess::readInode(Inode *inode_item, int inode_addr)
 	disk_head.seekg(K_INODE_STARTADDR * K_BLOCK_SIZE + inode_addr * K_INODE_SIZE, ios::beg);
 	//读取出512字节
 	char buf[K_INODE_SIZE];
-	disk_head.read(buf, K_INODE_SIZE);
-	memcpy(inode_item, buf, K_BLOCK_SIZE);
+	char *temp2 = new char[200];
+	disk_head.read((char *)buf, K_INODE_SIZE);
+	char *temp = new char[200];
+	memcpy(inode_item, buf, sizeof(Inode));
 	cout << "test read Inode: " << endl;
-	
+
 	cout << "test inode item inode num: " << inode_item->i_Inode_num << endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_mode: " <<inode_item->i_mode<< endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_counter:" <<inode_item->i_counter<< endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_uname:" <<inode_item->i_uname<< endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_gname:" <<inode_item->i_gname<< endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_size:" <<inode_item->i_size<< endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 i_ctime" <<inode_item->i_ctime << " "  << inode_item->i_mtime << " "<< inode_item->i_atime<< endl;
-	for(int i = 0; i < 12; i++) {
-		cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_dirBlock:" <<inode_item->i_dirBlock[i]<< endl;
+	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_mode: " << inode_item->i_mode << endl;
+	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_counter:" << inode_item->i_counter << endl;
+	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_uname:" << inode_item->i_uname << endl;
+	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_gname:" << inode_item->i_gname << endl;
+	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_size:" << inode_item->i_size << endl;
+	cout << "DEBUG::FILEPROCESS::readInode 382 i_ctime" << inode_item->i_ctime << " " << inode_item->i_mtime << " " << inode_item->i_atime << endl;
+	for (int i = 0; i < 12; i++)
+	{
+		cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_dirBlock:" << inode_item->i_dirBlock[i] << endl;
 	}
 	cout << "test inode item inode indirBlock: " << inode_item->i_indirBlock_1 << endl;
 }
 
-void FileProcess::readBlock(char *&block_buf, int block_addr)
+void FileProcess::readBlock(char *block_buf, int block_addr)
 {
 	//读出一个block
 	disk_head.seekg(block_addr * K_BLOCK_SIZE, std::ios::beg);
@@ -412,10 +405,9 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 	DirItem dirlist[28];
 
 	Inode *current_inode = new Inode();
-
 	readInode(current_inode, parent_inode_addr);
 
-	testWriteInode(parent_inode_addr);
+	//testWriteInode(parent_inode_addr);
 	std::cout << "DEBUG test in call mkdir function: " << current_inode->i_Inode_num << std::endl;
 
 	int dir_item_cnt = 0; //遍历到第几个目录item
@@ -449,13 +441,10 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 		else
 		{
 			//取出直接块
-			char *block_buf = new char[K_BLOCK_SIZE];
-			readBlock(block_buf, current_inode->i_dirBlock[dir_block_num]);
+			readBlock(buf_4KB, current_inode->i_dirBlock[dir_block_num]);
 
 			//没有办法强制转型，所以采用内存复制的方式
-			memcpy(dirlist, block_buf, sizeof(DirItem) * 28);
-
-			delete[] block_buf;
+			memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
 
 			for (int j = 0; j < K_DIR_ITEM_PER_BLOCK; j++)
 			{
@@ -471,6 +460,7 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 						printf("目录已存在\n");
 						return false;
 					}
+					delete tmp_inode;
 				}
 				else if (strcmp(dirlist[j].itemName, "") == 0 || dir_item_cnt == (current_inode->i_counter + 1))
 				{
@@ -478,9 +468,9 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 					//记录这个位置
 					if (posi == -1)
 					{
-						std::cout << "DEBUG::FILEPROCESS::mkdir dir 471 block position: " <<  current_inode->i_dirBlock[dir_block_num] << std::endl;
+						std::cout << "DEBUG::FILEPROCESS::mkdir dir 471 block position: " << current_inode->i_dirBlock[dir_block_num] << std::endl;
 						std::cout << "DEBUG::FILEPROCESS::mkdir dir 472 item position: " << j << std::endl;
-						posi =  current_inode->i_dirBlock[dir_block_num];
+						posi = current_inode->i_dirBlock[dir_block_num];
 						posj = j;
 						break;
 					}
@@ -510,14 +500,13 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 		}
 		else
 		{
-			char *block_buf = new char[K_BLOCK_SIZE];
-			readBlock(block_buf, posi);
-			memcpy(dirlist, block_buf, sizeof(DirItem) * 28);
+
+			readBlock(buf_4KB, posi);
+			memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
 			for (int debug_i = 0; debug_i < 28; debug_i++)
 			{
 				std::cout << "DEBUG::FILEPROCESS::mkdir 505 dirlist: dir_name:" << dirlist[debug_i].itemName << " |||dir->inode is: " << dirlist[debug_i].inode_addr << std::endl;
 			}
-			delete[] block_buf;
 		}
 
 		//创建目录名
@@ -530,6 +519,7 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 			return false;
 		}
 		dirlist[posj].inode_addr = child_dir_inode_addr;
+
 		for (int debug_i = 0; debug_i < 28; debug_i++)
 		{
 			std::cout << "DEBUG::FILEPROCESS::mkdir 521 dirlist: dir_name:" << dirlist[debug_i].itemName << " |||dir->inode is: " << dirlist[debug_i].inode_addr << std::endl;
@@ -603,49 +593,6 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 	}
 }
 
-//  //这个不是很好实现，先不处理
-// void FileProcess::rmall(int parent_inode_addr) {
-// 	//取出Inode
-// 	Inode* current_inode;
-// 	readInode(current_inode, parent_inode_addr);
-
-// 	//取出目录项数
-// 	if(current_inode->i_counter <= 2) {
-// 		freeBlock(current_inode->i_dirBlock[0]);
-// 		freeInode(parent_inode_addr);
-// 		return ;
-// 	}
-
-// 	int counter = 0;
-// 	while(counter < 28 * 12) {
-// 		DirItem dirlist[28] = {0};
-// 		if(current_inode->i_dirBlock[counter/28] == -1) {
-// 			counter += 28;
-// 			continue;
-// 		}
-
-// 		//取出磁盘块
-// 		int parent_block_addr = current_inode->i_dirBlock[counter/28];
-// 		char* block_buf = new char [K_BLOCK_SIZE];
-// 		readBlock(block_buf, parent_block_addr);
-// 		memcpy(dirlist, block_buf, sizeof(DirItem) * 28);
-// 		delete[] block_buf;
-
-// 		//从磁盘块依次取出目录项，递归删除
-// 		bool flag = false;
-// 		for(int j = 0; j < K_DIR_ITEM_PER_BLOCK; j++) {
-// 			if( ! (strcmp(dirlist[j].itemName,".")==0 || strcmp(dirlist[j].itemName,"..")==0 || strcmp(dirlist[j].itemName,"")==0 ) ){
-// 				flag = true;
-// 				rmall(dirlist[j].inode_addr);
-// 		}
-// 		counter++;
-
-// 	}
-
-// 	}
-
-// }
-
 void FileProcess::rmall(int parinoAddr) //删除该节点下所有文件或目录
 {
 	//从这个地址取出inode
@@ -656,7 +603,8 @@ void FileProcess::rmall(int parinoAddr) //删除该节点下所有文件或目�
 	int cnt = cur->i_counter;
 	if (cnt <= 2)
 	{
-		freeBlock(cur->i_dirBlock[0]);
+		//文件与空目录直接在这里进行删除
+		//freeBlock(cur->i_dirBlock[0]);
 		freeInode(parinoAddr);
 		return;
 	}
@@ -673,14 +621,14 @@ void FileProcess::rmall(int parinoAddr) //删除该节点下所有文件或目�
 		}
 		//取出磁盘块
 		int parblockAddr = cur->i_dirBlock[i / 28];
-		char *block_buf = new char[K_BLOCK_SIZE];
-		readBlock(block_buf, parblockAddr);
-		memcpy(dirlist, block_buf, sizeof(DirItem) * 28);
+		
+		readBlock(buf_4KB, parblockAddr);
+		memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
 
 		//从磁盘块中依次取出目录项，递归删除
 		int j;
 		bool f = false;
-		for (j = 0; j < 16; j++)
+		for (j = 0; j < 28; j++)
 		{
 			//Inode tmp;
 			if (!(strcmp(dirlist[j].itemName, ".") == 0 ||
@@ -695,15 +643,107 @@ void FileProcess::rmall(int parinoAddr) //删除该节点下所有文件或目�
 
 			i++;
 		}
-
-		//该磁盘块已空，回收
-		if (f)
-			freeBlock(parblockAddr);
 	}
 	//该inode已空，回收
 	freeInode(parinoAddr);
 	return;
 }
+
+bool FileProcess::rmdir(int parinoAddr, char name[]) //目录删除函数
+{
+	if (strlen(name) >= K_MAX_NAME_SIZE)
+	{
+		printf("超过最大目录名长度\n");
+		return false;
+	}
+
+	if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
+	{
+		printf("错误操作\n");
+		return 0;
+	}
+
+	//从这个地址取出inode
+	Inode *cur = new Inode();
+	readInode(cur, parinoAddr);
+	//取出目录项数
+	int cnt = cur->i_counter;
+
+	//判断文件模式。6为owner，3为group，0为other
+	int filemode;
+	if (strcmp(g_current_user_name, cur->i_uname) == 0)
+		filemode = 6;
+	else if (strcmp(g_current_group_name, cur->i_gname) == 0)
+		filemode = 3;
+	else
+		filemode = 0;
+
+	if ((((cur->i_mode >> filemode >> 1) & 1) == 0) && (strcmp(g_current_user_name, "root") != 0))
+	{
+		//没有写入权限
+		printf("权限不足：无写入权限\n");
+		return false;
+	}
+
+	//依次取出磁盘块
+	int i = 0;
+	while (i < 28 * 12)
+	{ //小于160
+		DirItem dirlist[28] = {0};
+
+		if (cur->i_dirBlock[i / 28] == -1)
+		{
+			i += 28;
+			continue;
+		}
+		//取出磁盘块
+		int parblockAddr = cur->i_dirBlock[i / 28];
+		readBlock(buf_4KB, parblockAddr);
+		memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
+
+		//找到要删除的目录
+		int j;
+		for (j = 0; j < 28; j++)
+		{
+			Inode *tmp = new Inode();
+			//取出该目录项的inode，判断该目录项是目录还是文件
+			readInode(tmp, dirlist[j].inode_addr);
+
+			if (strcmp(dirlist[j].itemName, name) == 0)
+			{
+				if (((tmp->i_mode >> 9) & 1) == 1)
+				{ //找到目录
+					//是目录
+
+					rmall(dirlist[j].inode_addr);
+
+					//删除该目录条目，写回磁盘
+					strcpy(dirlist[j].itemName, "");
+					dirlist[j].inode_addr = -1;
+					readBlock(buf_4KB, parblockAddr);
+					memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
+					cur->i_counter--;
+					//fseek(fw,parinoAddr,SEEK_SET);
+					//fwrite(&cur,sizeof(Inode),1,fw);
+					readInode(cur, parinoAddr);
+
+					//fflush(fw);
+					return true;
+				}
+				else
+				{
+					//不是目录，不管
+				}
+			}
+			i++;
+			delete tmp;
+		}
+	}
+
+	printf("没有找到该目录\n");
+	return false;
+}
+
 bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件函数，在该目录下创建文件，文件内容存在buf
 {
 	if (strlen(name) >= K_MAX_NAME_SIZE)
@@ -722,21 +762,21 @@ bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件
 	int posi = -1, posj = -1; //找到的目录位置
 	int dno;
 	int cnt = cur->i_counter + 1; //目录项数
-	while (i < 28 * 12)
+	while (i < 28 * 12 && posi == -1)
 	{
 		//160个目录项之内，可以直接在直接块里找
 		dno = i / 28; //在第几个直接块里
 
 		if (cur->i_dirBlock[dno] == -1)
 		{
-			i += 16;
+			i += 28;
 			continue;
 		}
 
-		char *block_buf = new char[K_BLOCK_SIZE];
-		readBlock(block_buf, cur->i_dirBlock[dno]);
-		memcpy(dirlist, block_buf, sizeof(DirItem) * 28);
-		delete[] block_buf;
+		//char *block_buf = new char[K_BLOCK_SIZE];
+		readBlock(buf_4KB, cur->i_dirBlock[dno]);
+		memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
+		//delete[] block_buf;
 		//输出该磁盘块中的所有目录项
 		int j;
 		for (j = 0; j < 28; j++)
@@ -745,8 +785,9 @@ bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件
 			if (posi == -1 && strcmp(dirlist[j].itemName, "") == 0)
 			{
 				//找到一个空闲记录，将新文件创建到这个位置
-				posi = dno;
+				posi = cur->i_dirBlock[dno];
 				posj = j;
+				break;
 			}
 			else if (strcmp(dirlist[j].itemName, name) == 0)
 			{
@@ -765,16 +806,6 @@ bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件
 	}
 	if (posi != -1)
 	{
-		//之前找到一个目录项了
-		//取出之前那个空闲目录项对应的磁盘块
-		// fseek(fr,cur.i_dirBlock[posi],SEEK_SET);
-		// fread(dirlist,sizeof(dirlist),1,fr);
-		// fflush(fr);
-		char *block_buf = new char[K_BLOCK_SIZE];
-
-		readBlock(block_buf, dno);
-		memcpy(dirlist, block_buf, sizeof(DirItem) * 28);
-		//创建这个目录项
 		strcpy(dirlist[posj].itemName, name); //文件名
 		int chiinoAddr = allocInode();		  //分配当前节点地址
 		if (chiinoAddr == -1)
@@ -810,6 +841,11 @@ bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件
 			//写入到当前目录的磁盘块
 			//情况不明待调试
 			writeBlockFile(buf + k, curblockAddr);
+
+			//测试DEBUG
+			testWriteBlock(curblockAddr, 2);
+
+
 		}
 		//剩下的物理块全部置为 -1
 		for (k = len / K_BLOCK_SIZE + 1; k < 12; k++)
@@ -828,6 +864,7 @@ bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件
 			p.i_dirBlock[k / K_BLOCK_SIZE] = curblockAddr;
 			//写入到当前目录的磁盘块
 			writeBlockFile(buf, curblockAddr, 0);
+
 		}
 		p.i_size = len;
 		p.i_indirBlock_1 = -1; //没使用一级间接块
@@ -836,13 +873,17 @@ bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件
 
 		//将inode写入到申请的inode地址
 		writeInode((char *)&p, chiinoAddr);
+		testWriteInode(chiinoAddr);
+
 
 		//将当前目录的磁盘块写回
-		writeBlockFile((char *)dirlist, cur->i_dirBlock[posi]);
-
+		writeBlockFile((char *)dirlist, cur->i_dirBlock[dno]);
+		testWriteBlock( cur->i_dirBlock[dno], 1);
 		//写回inode
 		cur->i_counter++;
 		writeInode((char *)cur, parinoAddr);
+		testWriteInode(parinoAddr);
+
 		return true;
 	}
 	else
@@ -883,7 +924,7 @@ bool FileProcess::del(int parinoAddr, char name[]) //删除文件函数。在当
 	//依次取出磁盘块
 	int i = 0;
 	while (i < 28 * 12)
-	{ //小于160
+	{ 
 		DirItem dirlist[28] = {0};
 
 		if (cur->i_dirBlock[i / 28] == -1)
@@ -893,10 +934,10 @@ bool FileProcess::del(int parinoAddr, char name[]) //删除文件函数。在当
 		}
 		//取出磁盘块
 		int parblockAddr = cur->i_dirBlock[i / 28];
-		char *block_buf = new char[K_BLOCK_SIZE];
-		readBlock(block_buf, parblockAddr);
-		memcpy(dirlist, block_buf, sizeof(DirItem) * 28);
-		delete[] block_buf;
+		//char *block_buf = new char[K_BLOCK_SIZE];
+		readBlock(buf_4KB, parblockAddr);
+		memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
+		//delete[] block_buf;
 
 		//找到要删除的目录
 		int pos;
@@ -918,9 +959,9 @@ bool FileProcess::del(int parinoAddr, char name[]) //删除文件函数。在当
 
 					//释放block
 					int k;
-					for (k = 0; k < 12; k++)
-						if (tmp->i_dirBlock[k] != -1)
-							freeBlock(tmp->i_dirBlock[k]);
+					// for (k = 0; k < 12; k++)
+					// 	if (tmp->i_dirBlock[k] != -1)
+					// 		freeBlock(tmp->i_dirBlock[k]);
 
 					//释放inode
 					freeInode(dirlist[pos].inode_addr);
@@ -929,10 +970,11 @@ bool FileProcess::del(int parinoAddr, char name[]) //删除文件函数。在当
 					strcpy(dirlist[pos].itemName, "");
 					dirlist[pos].inode_addr = -1;
 					writeBlockFile((char *)dirlist, parblockAddr);
-
+					testWriteBlock(parblockAddr,1);
 					cur->i_counter--;
 
 					writeInode((char *)cur, parinoAddr);
+					testWriteInode(parinoAddr);
 					return true;
 				}
 			}
@@ -976,18 +1018,18 @@ void FileProcess::ls(int parinoAddr) //显示当前目录下的所有文件和�
 		DirItem dirlist[28] = {0};
 		if (cur->i_dirBlock[i / 28] == -1)
 		{
-			i += 16;
+			i += 28;
 			continue;
 		}
 		//取出磁盘块
 		int parblockAddr = cur->i_dirBlock[i / 28];
-		char *block_buf = new char[K_BLOCK_SIZE];
-		readBlock(block_buf, parblockAddr);
-		memcpy(dirlist, block_buf, sizeof(DirItem) * 28);
-		delete[] block_buf;
+		//char *block_buf = new char[K_BLOCK_SIZE];
+		readBlock(buf_4KB, parblockAddr);
+		memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
+		//delete[] block_buf;
 		//输出该磁盘块中的所有目录项
-		int j;
-		for (j = 0; j < 16 && i < cnt; j++)
+
+		for (int j = 0; j < 28 && i < cnt; j++)
 		{
 			Inode *tmp = new Inode();
 			//取出该目录项的inode，判断该目录项是目录还是文件
@@ -1076,7 +1118,9 @@ void FileProcess::cd(int parinoAddr, char name[]) //进入当前目录下的name
 		}
 		//取出磁盘块
 		int parblockAddr = cur->i_dirBlock[i / 28];
-		char *block_buf = new char[K_BLOCK_SIZE];
+		//char *block_b= new char[K_BLOCK_SIZE];
+		readBlock(buf_4KB, parblockAddr);
+		memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
 
 		//输出该磁盘块中的所有目录项
 		int j;
@@ -1084,7 +1128,7 @@ void FileProcess::cd(int parinoAddr, char name[]) //进入当前目录下的name
 		{
 			if (strcmp(dirlist[j].itemName, name) == 0)
 			{
-				Inode *tmp;
+				Inode *tmp = new Inode();
 				//取出该目录项的inode，判断该目录项是目录还是文件
 
 				readInode(tmp, dirlist[j].inode_addr);
@@ -1099,28 +1143,36 @@ void FileProcess::cd(int parinoAddr, char name[]) //进入当前目录下的name
 					}
 
 					//找到该目录项，如果是目录，更换当前目录
-
 					g_current_dir_addr = dirlist[j].inode_addr;
 					if (strcmp(dirlist[j].itemName, ".") == 0)
 					{
-						//本目录，不动
+						//切换到本目录，不动
 					}
 					else if (strcmp(dirlist[j].itemName, "..") == 0)
 					{
-						//上一次目录
+						//切换到上一次目录，这个明显不对，需要修改
 						int k;
 						for (k = strlen(g_current_dir_name); k >= 0; k--)
+						{
 							if (g_current_dir_name[k] == '/')
+							{
 								break;
-						g_current_dir_name[k] = '\0';
-						if (strlen(g_current_dir_name) == 0)
-							g_current_dir_name[0] = '/', g_current_dir_name[1] = '\0';
+							}
+							g_current_dir_name[k] = '\0';
+							//根目录直接跳出
+						}
+						//设置g_current_dir_inode_addr
+						g_current_dir_inode_addr = dirlist[j].inode_addr;
 					}
 					else
 					{
+						//切换到当前目录下的一个子目录，
 						if (g_current_dir_name[strlen(g_current_dir_name) - 1] != '/')
 							strcat(g_current_dir_name, "/");
 						strcat(g_current_dir_name, dirlist[j].itemName);
+						//形成的格式大概为 g_current_dir_name/name
+						//设置当前inode地址
+						g_current_dir_inode_addr = dirlist[j].inode_addr;
 					}
 
 					return;
@@ -1129,6 +1181,7 @@ void FileProcess::cd(int parinoAddr, char name[]) //进入当前目录下的name
 				{
 					//找到该目录项，如果不是目录，继续找
 				}
+				delete tmp;
 			}
 
 			i++;
@@ -1140,23 +1193,33 @@ void FileProcess::cd(int parinoAddr, char name[]) //进入当前目录下的name
 	return;
 }
 
-void FileProcess::testWriteBlock(int block_addr)
+void FileProcess::testWriteBlock(int block_addr, int type)
 {
 	disk_head.seekg(block_addr * K_BLOCK_SIZE, std::ios::beg);
 	disk_head.read(buf_4KB, K_BLOCK_SIZE);
-	std::cout << "size of(DirItem): " << sizeof(DirItem) << std::endl;
-	char *buf = new char[sizeof(DirItem)];
-	for (int i = 0; i < 16; i++)
+	if (type == 1)
 	{
-		for (int j = 0; j < sizeof(DirItem); j++)
+		std::cout << "size of(DirItem): " << sizeof(DirItem) << std::endl;
+		char *buf = new char[sizeof(DirItem)];
+		for (int i = 0; i < 16; i++)
 		{
-			buf[j] = buf_4KB[i * sizeof(DirItem) + j];
+			for (int j = 0; j < sizeof(DirItem); j++)
+			{
+				buf[j] = buf_4KB[i * sizeof(DirItem) + j];
+			}
+			DirItem *temp = (DirItem *)buf;
+			std::cout << "DEBUG::FILEPROCESS::testWriteBLock 1084 temp ->inode_addr： " << temp->inode_addr << std::endl;
+			std::cout << "DEBUG::FILEPROCESS::testWriteBLock 1084 temp -> itemName: " << temp->itemName << std::endl;
 		}
-		DirItem *temp = (DirItem *)buf;
-		std::cout << "DEBUG::FILEPROCESS::testWriteBLock 1084 temp ->inode_addr： " << temp->inode_addr << std::endl;
-		std::cout << "DEBUG::FILEPROCESS::testWriteBLock 1084 temp -> itemName: " << temp->itemName << std::endl;
+	} 
+	else if(type == 2) {
+		//检查写文件内容
+		std::cout <<  "\033[1;32m"<< "DEBUG::FILEPROCESS::testwriteFile:: "<< "\033[0m" << buf_4KB << std::endl;
 	}
 }
+
+
+
 
 bool FileProcess::testWriteResult()
 {

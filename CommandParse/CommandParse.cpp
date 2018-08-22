@@ -8,7 +8,7 @@ void CommandParse::cmd()
     using std::string;
     string op;     //命令
     string target; //操作对象
-    cout << "current_user/home/:";
+    cout << "\033[1;32m"<< g_current_user_name << '@' << g_current_host_name << ':' << "\033[0m" << "\033[1;34m" << g_current_dir_name << "\033[0m" << "$ ";
     cin >> op;
     if (op == "help"){
         help();
@@ -85,7 +85,6 @@ void CommandParse::ls(std::string target){
     return;
 }
 void CommandParse::create(std::string file_name){
-
 }
 void CommandParse::del(std::string file_name){
 

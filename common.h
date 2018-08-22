@@ -73,6 +73,8 @@ extern char g_current_group_name[100];
 extern char g_current_user_dir_name[100];
 extern char g_current_dir_name[100];
 extern bool g_is_login;
+
+extern int  g_current_dir_inode_addr;
 //数据块起始地址
 //声明superblock 数据结构
 struct SuperBlock {

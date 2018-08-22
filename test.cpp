@@ -4,6 +4,8 @@
 using namespace std;
 
 int main() {
+    char* block_buf = new char[4096];
+        char* block_buf2 = new char[4096];
     char buf[512]= {0};
     buf[509] = '5';
     buf[508] = '5';
