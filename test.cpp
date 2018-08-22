@@ -2,7 +2,7 @@
 #include<iostream>
 #include<string>
 using namespace std;
-
+int test2(int a) ;
 int main() {
     char* block_buf = new char[4096];
         char* block_buf2 = new char[4096];
@@ -51,7 +51,14 @@ int main() {
      string str_a, str_b;
      cin >> str_a;
      cin >> str_b;
-     cout << str_a << " now is B " << str_b << endl; 
+     cout << str_a << " now is B " << str_b << endl;
+     test2(10); 
 
     return 0;
+}
+
+int test2(int a) {
+    cout  << a <<endl;
+    a = 100;
+    cout << a << endl;
 }

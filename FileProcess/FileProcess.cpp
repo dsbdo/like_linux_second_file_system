@@ -393,6 +393,10 @@ void FileProcess::readBlock(char *block_buf, int block_addr)
 	disk_head.seekg(block_addr * K_BLOCK_SIZE, std::ios::beg);
 	disk_head.read(block_buf, K_BLOCK_SIZE);
 }
+
+void FileProcess::readFile(int file_inode_addr, char *buf)
+{
+}
 //创建目录
 bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 {
@@ -621,7 +625,7 @@ void FileProcess::rmall(int parinoAddr) //删除该节点下所有文件或目�
 		}
 		//取出磁盘块
 		int parblockAddr = cur->i_dirBlock[i / 28];
-		
+
 		readBlock(buf_4KB, parblockAddr);
 		memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
 
@@ -844,8 +848,6 @@ bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件
 
 			//测试DEBUG
 			testWriteBlock(curblockAddr, 2);
-
-
 		}
 		//剩下的物理块全部置为 -1
 		for (k = len / K_BLOCK_SIZE + 1; k < 12; k++)
@@ -864,7 +866,6 @@ bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件
 			p.i_dirBlock[k / K_BLOCK_SIZE] = curblockAddr;
 			//写入到当前目录的磁盘块
 			writeBlockFile(buf, curblockAddr, 0);
-
 		}
 		p.i_size = len;
 		p.i_indirBlock_1 = -1; //没使用一级间接块
@@ -875,10 +876,9 @@ bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件
 		writeInode((char *)&p, chiinoAddr);
 		testWriteInode(chiinoAddr);
 
-
 		//将当前目录的磁盘块写回
 		writeBlockFile((char *)dirlist, cur->i_dirBlock[dno]);
-		testWriteBlock( cur->i_dirBlock[dno], 1);
+		testWriteBlock(cur->i_dirBlock[dno], 1);
 		//写回inode
 		cur->i_counter++;
 		writeInode((char *)cur, parinoAddr);
@@ -924,7 +924,7 @@ bool FileProcess::del(int parinoAddr, char name[]) //删除文件函数。在当
 	//依次取出磁盘块
 	int i = 0;
 	while (i < 28 * 12)
-	{ 
+	{
 		DirItem dirlist[28] = {0};
 
 		if (cur->i_dirBlock[i / 28] == -1)
@@ -970,7 +970,7 @@ bool FileProcess::del(int parinoAddr, char name[]) //删除文件函数。在当
 					strcpy(dirlist[pos].itemName, "");
 					dirlist[pos].inode_addr = -1;
 					writeBlockFile((char *)dirlist, parblockAddr);
-					testWriteBlock(parblockAddr,1);
+					testWriteBlock(parblockAddr, 1);
 					cur->i_counter--;
 
 					writeInode((char *)cur, parinoAddr);
@@ -1193,6 +1193,193 @@ void FileProcess::cd(int parinoAddr, char name[]) //进入当前目录下的name
 	return;
 }
 
+//系统编辑文件的方法
+void FileProcess::sysEditFile(int file_inode_addr, char content[], int content_size_byte, int edit_type)
+{
+	//不想判断是否有简接块了，真的懒得写了
+	Inode *current_inode = new Inode();
+	readInode(current_inode, file_inode_addr);
+	//文件占用磁盘块数目
+	if (edit_type == K_APPEND_FILE)
+	{
+		int file_blocks = current_inode->i_size / K_BLOCK_SIZE;
+		if ((content_size_byte + current_inode->i_size) / K_BLOCK_SIZE > file_blocks)
+		{
+			//需要申请block
+			int need_to_alloc_block = (content_size_byte + current_inode->i_size) / K_BLOCK_SIZE - file_blocks;
+			//从哪一个位置插入
+			int position = current_inode->i_size % K_BLOCK_SIZE;
+			//插入多少可以填满这个block
+			int len = K_BLOCK_SIZE - position;
+			readBlock(buf_4KB, current_inode->i_dirBlock[file_blocks]);
+			memcpy(buf_4KB + position, content, len);
+			writeBlockFile(buf_4KB, current_inode->i_dirBlock[file_blocks]);
+
+			for (int i = 0; i < need_to_alloc_block; i++)
+			{
+				int new_block = allocBlock();
+				if (content_size_byte - (len + i * K_BLOCK_SIZE) >= K_BLOCK_SIZE)
+				{
+					memcpy(buf_4KB, content + len + i * K_BLOCK_SIZE, K_BLOCK_SIZE);
+				}
+				else
+				{
+					memcpy(buf_4KB, content + len + i * K_BLOCK_SIZE, content_size_byte - (len + i * K_BLOCK_SIZE));
+				}
+
+				writeBlockFile(buf_4KB, new_block);
+			}
+		}
+		else
+		{
+			//可以直接追加，追加的方式，读取block 到缓冲区，然后再将block 写回
+			//寻找这个文件的最后一个block
+			if (current_inode->i_indirBlock_1 == -1)
+			{
+				//无简接块
+				readBlock(buf_4KB, current_inode->i_dirBlock[file_blocks]);
+				int position = current_inode->i_size % K_BLOCK_SIZE;
+				memcpy(buf_4KB + position, content, content_size_byte);
+				std::cout << buf_4KB << std::endl;
+				current_inode->i_size += content_size_byte;
+				writeBlockFile(buf_4KB, current_inode->i_dirBlock[file_blocks]);
+			}
+		}
+	}
+	else if(edit_type == K_COVER_FILE) {
+		//以覆盖的形式写文件
+		for(int i = 0; i < 12; i++){
+
+		}
+	}
+
+	delete current_inode;
+}
+
+int FileProcess::locateFile(char path[], int current_inode_addr)
+{
+	// /etc/***,绝对寻址
+	// ./ 相对寻址，支持 ./.././../      locate
+	int len = strlen(path);
+	int counter_src = 0;
+	int counter_des = 0;
+	//int current_inode = current_inode_addr;
+
+	if (path[0] == '/')
+	{
+		current_inode_addr = g_root_dir_inode_addr;
+		counter_src++;
+		//绝对寻址
+	}
+	else if (path[0] == '.' && path[1] == '/')
+	{
+		//本目录相对寻址
+		counter_src += 2;
+	}
+	else
+	{
+		//本目录相对寻址
+		counter_src = 0;
+	}
+	char *name = new char[128];
+	while (true)
+	{
+		if (path[counter_src] != '/' && counter_src < len)
+		{
+			name[counter_des] = path[counter_src];
+			counter_src++;
+			counter_des++;
+		}
+		else
+		{
+			std::cout << "name is: " << counter_des << "bytes; " << name << std::endl;
+
+			if (counter_src == len)
+			{
+				//定位文件Inode
+				current_inode_addr = locateFileHelp(name, current_inode_addr, counter_des, 1);
+			}
+			else
+			{
+				//定位目录Inode
+				current_inode_addr = locateFileHelp(name, current_inode_addr, counter_des, 2);
+			}
+			if (current_inode_addr == -1)
+			{
+				return -1;
+			}
+			else if (counter_src == len)
+			{
+				return current_inode_addr;
+			}
+			else
+			{
+				counter_des = 0;
+				counter_src++; //“跳掉 /”
+			}
+		}
+	}
+}
+
+int FileProcess::locateFileHelp(char name[], int inode_addr, int name_len, int locate_dir_or_file)
+{
+	//1 默认找文件
+	//2 找目录
+	//读取到的有效的dir_item 项
+	int effect_dir_item = 0;
+	DirItem dirlist[K_DIR_ITEM_PER_BLOCK];
+	char *dir_file_name = new char[name_len + 1];
+	strcpy(dir_file_name, name);
+	std::cout << "find file name is: " << dir_file_name << std::endl;
+	//读取当前Inode
+	Inode *cur = new Inode();
+	readInode(cur, inode_addr);
+	Inode *tmp_inode = new Inode();
+	for (int i = 0; i < 12; i++)
+	{
+		if (cur->i_dirBlock[i] != -1)
+		{
+			//这个block 里面有目录需要处理
+			readBlock(buf_4KB, cur->i_dirBlock[i]);
+			memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
+			//遍历当前目录项块
+			for (int j = 0; j < K_DIR_ITEM_PER_BLOCK; j++)
+			{
+				//如果这个块中有上一个文件的目录余留，如何处理呢？我觉得啊，不如创建目录的时候就把块重置好，这样就不用太过麻烦
+				//也就是dirlist[j].itemName == "", 即为无效
+				if (dirlist[j].itemName != "")
+				{
+					effect_dir_item++;
+					if (strcmp(dir_file_name, dirlist[j].itemName) == 0)
+					{
+						//判断是否是目录还是文件,需要将这个目录或者文件的inode 读取出来，判断是文件还是目录
+						readInode(tmp_inode, dirlist[j].inode_addr);
+						if ((tmp_inode->i_mode >> 9 & 1) == 1 && locate_dir_or_file == 2)
+						{
+							//这一项是一个目录
+							//已经找到项
+							delete cur;
+							delete tmp_inode;
+							return dirlist[j].inode_addr;
+						}
+						else if ((tmp_inode->i_mode >> 9 & 1) == 0 && locate_dir_or_file == 1)
+						{
+							//这一项是一个目录
+							//已经找到项
+							delete cur;
+							delete tmp_inode;
+							return dirlist[j].inode_addr;
+						}
+					}
+				}
+			}
+		}
+	}
+	delete cur;
+	delete tmp_inode;
+	return -1;
+}
+
 void FileProcess::testWriteBlock(int block_addr, int type)
 {
 	disk_head.seekg(block_addr * K_BLOCK_SIZE, std::ios::beg);
@@ -1211,15 +1398,15 @@ void FileProcess::testWriteBlock(int block_addr, int type)
 			std::cout << "DEBUG::FILEPROCESS::testWriteBLock 1084 temp ->inode_addr： " << temp->inode_addr << std::endl;
 			std::cout << "DEBUG::FILEPROCESS::testWriteBLock 1084 temp -> itemName: " << temp->itemName << std::endl;
 		}
-	} 
-	else if(type == 2) {
+	}
+	else if (type == 2)
+	{
 		//检查写文件内容
-		std::cout <<  "\033[1;32m"<< "DEBUG::FILEPROCESS::testwriteFile:: "<< "\033[0m" << buf_4KB << std::endl;
+		std::cout << "\033[1;32m"
+				  << "DEBUG::FILEPROCESS::testwriteFile:: "
+				  << "\033[0m" << buf_4KB << std::endl;
 	}
 }
-
-
-
 
 bool FileProcess::testWriteResult()
 {

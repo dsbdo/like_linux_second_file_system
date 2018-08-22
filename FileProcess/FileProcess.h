@@ -38,7 +38,8 @@ class FileProcess {
 		//读操作
 		void readInode(Inode* inode_item, int inode_addr);
 		void readBlock(char* block_buf,int block_addr);
-
+		void readFile(int file_inode_addr, char* buf);	
+		
 		bool mkdir(int parent_inode_addr, const char name[]);
 		//删除当前目录下的所有文件
 		void rmall(int parent_inode_addr);
@@ -50,7 +51,14 @@ class FileProcess {
 		
 		//打开文件并编辑
 		void vi(int file_inode_addr);
+			
+		//系统打开文件并写文件, edit_type 是指追加，还是清空重写
+		void sysEditFile(int file_inode_addr, char content[],int content_size_byte, int edit_type);
 		
+		int locateFile(char path[], int current_inode);
+		//将本目录要寻找的文件名与本目录inode地址传递，进行寻找并返回对应inode
+		int locateFileHelp(char name[], int cur_inode_addr, int name_len, int locate_dir_or_file = 1);
+
 
 		bool testWriteResult();
 		void testWriteBlock(int block_addr, int type = 1);

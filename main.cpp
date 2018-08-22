@@ -34,12 +34,13 @@ int main(int argc, char **argv)
 	fstream disk_head;
 	disk_head.open(K_SYSTEM_FILE, ios::in | ios::out | ios::binary);
 	InitMoudle init_moudle;
+	UserMoudle user_moudle;
 	if (!disk_head)
 	{
 		cout << "File is not exist, 重新构建虚拟磁盘" << endl;
 		system("dd if=/dev/zero of=SystemDisk bs=1G count=1");
 		
-		//UserMoudle user_moudle;
+		
 		//初始化磁盘
 		int init_result = init_moudle.initDisk();
 		if (init_result == 0)
@@ -57,7 +58,7 @@ int main(int argc, char **argv)
 				if (passwd == repeat_passwd)
 				{
 					//用户输入正确，开始创建超级用户
-					//user_moudle.createRootUser(passwd);
+					user_moudle.createRootUser(passwd);
 					cmd_object.rootLogin(passwd);
 					//如果创建失败呢? 先不管了，就这样吧
 					break;
@@ -73,6 +74,7 @@ int main(int argc, char **argv)
 	{
 
 		int init_result = init_moudle.initDisk();
+		user_moudle.createRootUser("1234");
 		cout << "go to next step++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 		init_moudle.bootFileSystem();
 	}

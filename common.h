@@ -62,6 +62,12 @@ const int K_DATA_BLOCK_START_ADDR = 130;
 //单个文件最大尺寸bytes为单位最大4096 + 48KB
 const int K_FILE_MAX_SIZE_KB = 4096+48;
 
+//文件操作,文件末尾追加
+const int K_APPEND_FILE = 1;
+//覆盖式写入 
+const int K_COVER_FILE = 2;
+
+
 
 //inode 位图声明
 extern bool inode_bitmap[K_INODE_NUM];
@@ -125,4 +131,8 @@ struct DirItem {
 	int inode_addr;
 };
 
+struct UserInfo {
+	char name[100];
+	char passwd[100];
+};
 #endif

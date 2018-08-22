@@ -181,18 +181,19 @@ bool InitMoudle::createRootDir() {
 			m_file_process.testWriteInode(inode_addr);
 		    m_file_process.testWriteBlock(block_addr);
 		    m_file_process.cd(g_root_dir_inode_addr,"etc");
-			m_file_process.ls(g_root_dir_inode_addr);
-			m_file_process.cd(g_current_dir_inode_addr,"..");
-			m_file_process.create(g_root_dir_inode_addr,"dsbdo.sys", "china is a great couintry");
-			m_file_process.del(g_root_dir_inode_addr, "dsbdo.sys");
+			m_file_process.create(g_current_dir_inode_addr, "passwd", "root:123456");
+			// m_file_process.ls(g_root_dir_inode_addr);
+			// m_file_process.cd(g_current_dir_inode_addr,"..");
+			// m_file_process.create(g_root_dir_inode_addr,"dsbdo.sys", "china is a great couintry");
+			// m_file_process.del(g_root_dir_inode_addr, "dsbdo.sys");
 			
-			m_file_process.cd(g_root_dir_inode_addr,"etc");
-			m_file_process.mkdir(g_current_dir_inode_addr, "test_dir");
-			m_file_process.create(g_current_dir_inode_addr,"dsbdo.sys", "china is a great couintry");
-			m_file_process.del(g_current_dir_addr, "dsbdo.sys");
+			// m_file_process.cd(g_root_dir_inode_addr,"etc");
+			// m_file_process.mkdir(g_current_dir_inode_addr, "test_dir");
+			// m_file_process.create(g_current_dir_inode_addr,"dsbdo.sys", "china is a great couintry");
+			// m_file_process.del(g_current_dir_addr, "dsbdo.sys");
 
 			//m_file_process.rmall();
-			m_file_process.rmdir(g_root_dir_inode_addr,"etc");
+			//m_file_process.rmdir(g_root_dir_inode_addr,"etc");
 		return true;
 	}
 	else {

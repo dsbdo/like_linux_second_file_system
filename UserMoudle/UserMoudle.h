@@ -3,7 +3,7 @@
 #ifndef _USERMOUDLE_H
 #define _USERMOUDLE_H
 
-
+#include<iostream>
 #include "../common.h"
 #include "../FileProcess/FileProcess.h"
 class UserMoudle {
@@ -17,6 +17,7 @@ class UserMoudle {
 		bool deleteUser(std::string user_name);
 	private:
 		bool flag;
+		FileProcess m_file_process;
 };
 
 #endif

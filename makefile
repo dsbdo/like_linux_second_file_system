@@ -1,6 +1,6 @@
-main: main.o FileProcess.o InitMoudle.o CommandParse.o
-	g++ main.o	FileProcess.o InitMoudle.o CommandParse.o -o main.out -g 
-main.o: main.cpp ./FileProcess/FileProcess.cpp  ./InitMoudle/InitMoudle.cpp
+main: main.o FileProcess.o InitMoudle.o CommandParse.o UserMoudle.o
+	g++ main.o	FileProcess.o InitMoudle.o CommandParse.o UserMoudle.o -o main.out -g 
+main.o: main.cpp ./FileProcess/FileProcess.cpp  ./InitMoudle/InitMoudle.cpp ./UserMoudle/UserMoudle.cpp
 	g++ -c main.cpp -g
 	
 FileProcess.o: ./FileProcess/FileProcess.cpp 
@@ -11,3 +11,6 @@ InitMoudle.o: ./FileProcess/FileProcess.cpp ./InitMoudle/InitMoudle.cpp
 
 CommandParse.o: ./CommandParse/CommandParse.cpp ./UserMoudle/UserMoudle.cpp ./FileProcess/FileProcess.cpp
 	g++ -c ./CommandParse/CommandParse.cpp -g
+
+UserMoudle.o: ./UserMoudle/UserMoudle.cpp ./FileProcess/FileProcess.cpp
+	g++ -c ./UserMoudle/UserMoudle.cpp -g
