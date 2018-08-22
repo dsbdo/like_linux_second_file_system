@@ -39,12 +39,12 @@ class FileProcess {
 		void readInode(Inode* inode_item, int inode_addr);
 		void readBlock(char* block_buf,int block_addr);
 		void readFile(int file_inode_addr, char* buf);	
-		
+
 		bool mkdir(int parent_inode_addr, const char name[]);
 		//删除当前目录下的所有文件
 		void rmall(int parent_inode_addr);
 		bool rmdir(int parent_inode_addr, char name[]);
-		bool create(int parent_inode_addr, char name[], char buf[]);
+		bool create(int parent_inode_addr, char name[], char buf[], int size_byte);
 		bool del(int parent_inode_addr, char name[]);
 		void ls(int);
 		void cd(int, char name[]);

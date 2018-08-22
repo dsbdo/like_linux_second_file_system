@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 	fstream disk_head;
 	disk_head.open(K_SYSTEM_FILE, ios::in | ios::out | ios::binary);
 	InitMoudle init_moudle;
-	UserMoudle user_moudle;
+	UserMoudle user_moudle(init_moudle.getFileProcess());
 	if (!disk_head)
 	{
 		cout << "File is not exist, 重新构建虚拟磁盘" << endl;
@@ -74,9 +74,10 @@ int main(int argc, char **argv)
 	{
 
 		int init_result = init_moudle.initDisk();
+		init_moudle.bootFileSystem();
 		user_moudle.createRootUser("1234");
 		cout << "go to next step++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-		init_moudle.bootFileSystem();
+	
 	}
 	while (1)
 	{

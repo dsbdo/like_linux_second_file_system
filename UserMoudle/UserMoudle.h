@@ -8,7 +8,7 @@
 #include "../FileProcess/FileProcess.h"
 class UserMoudle {
 	public:
-		UserMoudle();
+		UserMoudle(FileProcess*);
 		~UserMoudle();
 		bool createRootUser(std::string passwd);
 		bool createOrdinaryUser(std::string user_name, std::string user_passed);
@@ -17,7 +17,7 @@ class UserMoudle {
 		bool deleteUser(std::string user_name);
 	private:
 		bool flag;
-		FileProcess m_file_process;
+		FileProcess* m_file_process;
 };
 
 #endif

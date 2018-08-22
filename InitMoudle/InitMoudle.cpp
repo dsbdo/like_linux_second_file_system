@@ -2,9 +2,11 @@
 #include<memory.h>
 #include "InitMoudle.h"
 
-//InitMoudle::InitMoudle(){}
+InitMoudle::InitMoudle(){
+	m_file_process = new FileProcess();
+}
 
-//InitMoudle::~InitMoudle() {}
+InitMoudle::~InitMoudle() {}
 
 //完成磁盘的划分，超级块与inode块的写入，同时挂载根目录， root 目录， home 目录
 int InitMoudle::initDisk()
@@ -13,7 +15,7 @@ int InitMoudle::initDisk()
 	initInodeBitMap();
 	initBlockBitMap();
 
-	m_file_process.loadBitMap();
+	m_file_process->loadBitMap();
 
 	createRootDir();
 	return 0;
@@ -42,11 +44,11 @@ bool InitMoudle::initSuperBlock()
 	init_superblock->s_data_block_startAddr = K_DATA_BLOCK_START_ADDR;
 
 	std::cout << "super block size = " << sizeof(SuperBlock) << " bytes" << std::endl;
-	bool write_result = m_file_process.writeFile((char *)init_superblock, K_SUPERBLOCK_STARTADDR, sizeof(SuperBlock));
+	bool write_result = m_file_process->writeFile((char *)init_superblock, K_SUPERBLOCK_STARTADDR, sizeof(SuperBlock));
 	if (write_result)
 	{
 		std::cout << "write block success, test write" << std::endl;
-		//m_file_process.testWriteResult();
+		//m_file_process->testWriteResult();
 		return true;
 	}
 	else
@@ -61,11 +63,11 @@ bool InitMoudle::initInodeBitMap() {
 	// inode bitmap 写入
 	memset(inode_bitmap, 0, sizeof(inode_bitmap));
 	//磁盘头为disk_head;
-	bool write_result = m_file_process.writeFile((char *)inode_bitmap, K_INODE_BITMAP_STARTADDR, sizeof(inode_bitmap));
+	bool write_result = m_file_process->writeFile((char *)inode_bitmap, K_INODE_BITMAP_STARTADDR, sizeof(inode_bitmap));
 	if (write_result)
 	{
 		//测一下inodebitmap 写了多少个block，因为仅有一个
-		//m_file_process.setBlockBitmap(K_INODE_BITMAP_STARTADDR);
+		//m_file_process->setBlockBitmap(K_INODE_BITMAP_STARTADDR);
 		return true;
 	}
 	else
@@ -81,7 +83,7 @@ bool InitMoudle::initBlockBitMap() {
 		block_bitmap[i] = 1;
 	}
 	//这里需要64个block 来描述 block bitmap
-	bool write_result = m_file_process.writeFile((char *)block_bitmap, K_BLOCK_BITMAP_STARTADDR, sizeof(block_bitmap));
+	bool write_result = m_file_process->writeFile((char *)block_bitmap, K_BLOCK_BITMAP_STARTADDR, sizeof(block_bitmap));
 
 	if (write_result)
 	{
@@ -109,8 +111,8 @@ bool InitMoudle::createRootDir() {
 	//插入目录项
 	strcpy(dirlist[0].itemName,".");
 	strcpy(dirlist[1].itemName, "..");
-	int block_addr = m_file_process.allocBlock();
-	int inode_addr = m_file_process.allocInode();
+	int block_addr = m_file_process->allocBlock();
+	int inode_addr = m_file_process->allocInode();
 	std::cout <<  "alloc inode num for root dir is: " << inode_addr << std::endl;
 	std::cout << "alloc block num for root dir is: " << block_addr << std::endl;
 	if(block_addr != -1 && inode_addr != -1) {
@@ -118,14 +120,14 @@ bool InitMoudle::createRootDir() {
 		dirlist[0].inode_addr = inode_addr;
 		dirlist[1].inode_addr = inode_addr;
 		//写磁盘 132 * 4 * 4  < 1024 *4
-		m_file_process.writeBlockFile((char*)dirlist, block_addr, sizeof(dirlist));
+		m_file_process->writeBlockFile((char*)dirlist, block_addr, sizeof(dirlist));
 		
 		
 		/*
 		*
 		* 测试函数
 		*/
-		m_file_process.testWriteBlock(block_addr);
+		m_file_process->testWriteBlock(block_addr);
 		/*
 		*
 		* 测试函数结束
@@ -154,14 +156,14 @@ bool InitMoudle::createRootDir() {
 		root_dir_inode.i_mode = MODE_DIR | DIR_DEF_PERMISSION;
 
 		//写入磁盘
-		m_file_process.writeInode((char*)&root_dir_inode, inode_addr);
+		m_file_process->writeInode((char*)&root_dir_inode, inode_addr);
 
 
 		/*
 		*
 		* 测试函数
 		*/
-		m_file_process.testWriteInode(inode_addr);
+		m_file_process->testWriteInode(inode_addr);
 		/*
 		*
 		* 测试函数结束
@@ -169,31 +171,30 @@ bool InitMoudle::createRootDir() {
 
 		//根目录创建成功，配备其他文件目录
 
-		m_file_process.mkdir(root_dir_inode.i_Inode_num, "home");
+		m_file_process->mkdir(root_dir_inode.i_Inode_num, "home");
 		std::cout << "********************test mkdir home*************************" << std::endl;
 			
-			m_file_process.testWriteInode(inode_addr);
+			m_file_process->testWriteInode(inode_addr);
 
-			m_file_process.testWriteBlock(block_addr);
+			m_file_process->testWriteBlock(block_addr);
 
-		m_file_process.mkdir(root_dir_inode.i_Inode_num, "etc");
+		m_file_process->mkdir(root_dir_inode.i_Inode_num, "etc");
 		std::cout << "********************test mkdir etc*************************" << std::endl;
-			m_file_process.testWriteInode(inode_addr);
-		    m_file_process.testWriteBlock(block_addr);
-		    m_file_process.cd(g_root_dir_inode_addr,"etc");
-			m_file_process.create(g_current_dir_inode_addr, "passwd", "root:123456");
-			// m_file_process.ls(g_root_dir_inode_addr);
-			// m_file_process.cd(g_current_dir_inode_addr,"..");
-			// m_file_process.create(g_root_dir_inode_addr,"dsbdo.sys", "china is a great couintry");
-			// m_file_process.del(g_root_dir_inode_addr, "dsbdo.sys");
-			
-			// m_file_process.cd(g_root_dir_inode_addr,"etc");
-			// m_file_process.mkdir(g_current_dir_inode_addr, "test_dir");
-			// m_file_process.create(g_current_dir_inode_addr,"dsbdo.sys", "china is a great couintry");
-			// m_file_process.del(g_current_dir_addr, "dsbdo.sys");
+			m_file_process->testWriteInode(inode_addr);
+		    m_file_process->testWriteBlock(block_addr);
 
-			//m_file_process.rmall();
-			//m_file_process.rmdir(g_root_dir_inode_addr,"etc");
+			// m_file_process->ls(g_root_dir_inode_addr);
+			// m_file_process->cd(g_current_dir_inode_addr,"..");
+			// m_file_process->create(g_root_dir_inode_addr,"dsbdo.sys", "china is a great couintry");
+			// m_file_process->del(g_root_dir_inode_addr, "dsbdo.sys");
+			
+			// m_file_process->cd(g_root_dir_inode_addr,"etc");
+			// m_file_process->mkdir(g_current_dir_inode_addr, "test_dir");
+			// m_file_process->create(g_current_dir_inode_addr,"dsbdo.sys", "china is a great couintry");
+			// m_file_process->del(g_current_dir_addr, "dsbdo.sys");
+
+			//m_file_process->rmall();
+			//m_file_process->rmdir(g_root_dir_inode_addr,"etc");
 		return true;
 	}
 	else {
@@ -206,8 +207,11 @@ bool InitMoudle::createRootDir() {
 //文件系统启动
 void InitMoudle::bootFileSystem(){
 	//读取超级块
-	m_file_process.loadSuperBlock();
+	m_file_process->loadSuperBlock();
 	//加载位图
-	m_file_process.loadBitMap();
+	m_file_process->loadBitMap();
 }
 
+FileProcess* InitMoudle::getFileProcess() const {
+	return m_file_process;
+}

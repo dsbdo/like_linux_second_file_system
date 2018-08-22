@@ -396,6 +396,18 @@ void FileProcess::readBlock(char *block_buf, int block_addr)
 
 void FileProcess::readFile(int file_inode_addr, char *buf)
 {
+	//读取文件内容，并输出到指定的buffer
+	Inode* current_inode = new Inode();
+	readInode(current_inode, file_inode_addr);
+	int file_blocks = current_inode->i_size / K_BLOCK_SIZE;
+	for(int i = 0; i < file_blocks; i++) {
+		readBlock(buf_4KB, current_inode->i_dirBlock[i]);
+		memcpy(buf+i*K_BLOCK_SIZE, buf_4KB, K_BLOCK_SIZE);
+	}
+	//还有残留的一部分
+	int len = current_inode->i_size - file_blocks*K_BLOCK_SIZE;
+	readBlock(buf_4KB, current_inode->i_dirBlock[file_blocks]);
+	memcpy(buf, buf_4KB, len);
 }
 //创建目录
 bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
@@ -748,7 +760,7 @@ bool FileProcess::rmdir(int parinoAddr, char name[]) //目录删除函数
 	return false;
 }
 
-bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件函数，在该目录下创建文件，文件内容存在buf
+bool FileProcess::create(int parinoAddr, char name[], char buf[], int size_byte) //创建文件函数，在该目录下创建文件，文件内容存在buf
 {
 	if (strlen(name) >= K_MAX_NAME_SIZE)
 	{
@@ -831,7 +843,7 @@ bool FileProcess::create(int parinoAddr, char name[], char buf[]) //创建文件
 
 		//将buf内容存到磁盘块
 		int k;
-		int len = strlen(buf); //文件长度，单位为字节
+		int len = size_byte; //文件长度，单位为字节
 		for (k = 0; k < len; k += K_BLOCK_SIZE)
 		{ //最多12次，12个磁盘快，即最多5K
 			//分配这个inode的磁盘块，从控制台读取内容
@@ -1228,7 +1240,11 @@ void FileProcess::sysEditFile(int file_inode_addr, char content[], int content_s
 				}
 
 				writeBlockFile(buf_4KB, new_block);
+				current_inode->i_dirBlock[file_blocks+i+1] = new_block;
 			}
+			//更新inode
+			current_inode->i_size += content_size_byte;
+			writeInode((char*)current_inode,file_inode_addr);
 		}
 		else
 		{
@@ -1236,7 +1252,7 @@ void FileProcess::sysEditFile(int file_inode_addr, char content[], int content_s
 			//寻找这个文件的最后一个block
 			if (current_inode->i_indirBlock_1 == -1)
 			{
-				//无简接块
+				//无简接块,
 				readBlock(buf_4KB, current_inode->i_dirBlock[file_blocks]);
 				int position = current_inode->i_size % K_BLOCK_SIZE;
 				memcpy(buf_4KB + position, content, content_size_byte);
@@ -1244,12 +1260,26 @@ void FileProcess::sysEditFile(int file_inode_addr, char content[], int content_s
 				current_inode->i_size += content_size_byte;
 				writeBlockFile(buf_4KB, current_inode->i_dirBlock[file_blocks]);
 			}
+			current_inode->i_size += content_size_byte;
+			writeInode((char*)current_inode, file_inode_addr);
 		}
 	}
-	else if(edit_type == K_COVER_FILE) {
-		//以覆盖的形式写文件
-		for(int i = 0; i < 12; i++){
+	else if (edit_type == K_COVER_FILE)
+	{
+		//未写完！！！！！
+		//以覆盖的形式写文件,不
+		//写文件
+		if (content_size_byte <= K_BLOCK_SIZE * 12)
+		{
+			int file_blocks = content_size_byte / K_BLOCK_SIZE;
+			for(int i =0; i < file_blocks; i++) {
+				memcpy(buf_4KB, content+i*K_BLOCK_SIZE, K_BLOCK_SIZE);
+				writeBlockFile(buf_4KB, current_inode->i_dirBlock[i]);
+			}
+			int left_byte_len = content_size_byte - file_blocks*K_BLOCK_SIZE;
+			memcpy(buf_4KB, content+file_blocks*K_BLOCK_SIZE, left_byte_len);
 
+			writeBlockFile(buf_4KB, current_inode->i_dirBlock[file_blocks]);
 		}
 	}
 
