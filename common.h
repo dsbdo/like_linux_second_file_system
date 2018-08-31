@@ -13,7 +13,8 @@
 #define MODE_DIR	01000					//目录标识
 #define MODE_FILE	00000					//文件标识
 #define FILE_DEF_PERMISSION 0664			//文件默认权限
-#define DIR_DEF_PERMISSION	0755			//目录默认权限
+#define DIR_DEF_PERMISSION	0755
+#define oops(s, x) { perror(s); exit(x); }			//目录默认权限
 //fstream disk_head;
 extern const char* K_SYSTEM_FILE;
 extern int g_current_dir_addr;
@@ -72,7 +73,7 @@ const int K_COVER_FILE = 2;
 //inode 位图声明
 extern bool inode_bitmap[K_INODE_NUM];
 extern bool block_bitmap[K_BLOCK_NUM];
-extern int  g_root_dir_inode_addr;
+extern const int  g_root_dir_inode_addr;
 extern char g_current_user_name[100];
 extern char g_current_host_name[100];
 extern char g_current_group_name[100];

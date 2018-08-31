@@ -214,6 +214,12 @@ bool FileProcess::isFreeInode()
 		return false;
 	}
 }
+
+bool FileProcess::isFreeInode(int inode_addr)
+{
+	//1 是表示有人在用， 0 表示空闲
+	return m_inode_bitmap[inode_addr] == 0 ? true : false;
+}
 bool FileProcess::isFreeBlock()
 {
 	if (m_free_block_num > 0)
@@ -371,20 +377,20 @@ void FileProcess::readInode(Inode *inode_item, int inode_addr)
 	disk_head.read((char *)buf, K_INODE_SIZE);
 	char *temp = new char[200];
 	memcpy(inode_item, buf, sizeof(Inode));
-	cout << "test read Inode: " << endl;
+	// cout << "test read Inode: " << endl;
 
-	cout << "test inode item inode num: " << inode_item->i_Inode_num << endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_mode: " << inode_item->i_mode << endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_counter:" << inode_item->i_counter << endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_uname:" << inode_item->i_uname << endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_gname:" << inode_item->i_gname << endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_size:" << inode_item->i_size << endl;
-	cout << "DEBUG::FILEPROCESS::readInode 382 i_ctime" << inode_item->i_ctime << " " << inode_item->i_mtime << " " << inode_item->i_atime << endl;
-	for (int i = 0; i < 12; i++)
-	{
-		cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_dirBlock:" << inode_item->i_dirBlock[i] << endl;
-	}
-	cout << "test inode item inode indirBlock: " << inode_item->i_indirBlock_1 << endl;
+	// cout << "test inode item inode num: " << inode_item->i_Inode_num << endl;
+	// cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_mode: " << inode_item->i_mode << endl;
+	// cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_counter:" << inode_item->i_counter << endl;
+	// cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_uname:" << inode_item->i_uname << endl;
+	// cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_gname:" << inode_item->i_gname << endl;
+	// cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_size:" << inode_item->i_size << endl;
+	// cout << "DEBUG::FILEPROCESS::readInode 382 i_ctime" << inode_item->i_ctime << " " << inode_item->i_mtime << " " << inode_item->i_atime << endl;
+	// for (int i = 0; i < 12; i++)
+	// {
+	// 	cout << "DEBUG::FILEPROCESS::readInode 382 inode_item->i_dirBlock:" << inode_item->i_dirBlock[i] << endl;
+	// }
+	// cout << "test inode item inode indirBlock: " << inode_item->i_indirBlock_1 << endl;
 }
 
 void FileProcess::readBlock(char *block_buf, int block_addr)
@@ -397,15 +403,16 @@ void FileProcess::readBlock(char *block_buf, int block_addr)
 void FileProcess::readFile(int file_inode_addr, char *buf)
 {
 	//读取文件内容，并输出到指定的buffer
-	Inode* current_inode = new Inode();
+	Inode *current_inode = new Inode();
 	readInode(current_inode, file_inode_addr);
 	int file_blocks = current_inode->i_size / K_BLOCK_SIZE;
-	for(int i = 0; i < file_blocks; i++) {
+	for (int i = 0; i < file_blocks; i++)
+	{
 		readBlock(buf_4KB, current_inode->i_dirBlock[i]);
-		memcpy(buf+i*K_BLOCK_SIZE, buf_4KB, K_BLOCK_SIZE);
+		memcpy(buf + i * K_BLOCK_SIZE, buf_4KB, K_BLOCK_SIZE);
 	}
 	//还有残留的一部分
-	int len = current_inode->i_size - file_blocks*K_BLOCK_SIZE;
+	int len = current_inode->i_size - file_blocks * K_BLOCK_SIZE;
 	readBlock(buf_4KB, current_inode->i_dirBlock[file_blocks]);
 	memcpy(buf, buf_4KB, len);
 }
@@ -608,7 +615,7 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 		return false;
 	}
 }
-
+//等一下需要将上一级的inode->cnt -1
 void FileProcess::rmall(int parinoAddr) //删除该节点下所有文件或目录
 {
 	//从这个地址取出inode
@@ -736,14 +743,11 @@ bool FileProcess::rmdir(int parinoAddr, char name[]) //目录删除函数
 					//删除该目录条目，写回磁盘
 					strcpy(dirlist[j].itemName, "");
 					dirlist[j].inode_addr = -1;
-					readBlock(buf_4KB, parblockAddr);
+					writeBlockFile((char*)dirlist, parblockAddr);
 					memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
 					cur->i_counter--;
-					//fseek(fw,parinoAddr,SEEK_SET);
-					//fwrite(&cur,sizeof(Inode),1,fw);
-					readInode(cur, parinoAddr);
+					writeInode((char*)cur, parinoAddr);
 
-					//fflush(fw);
 					return true;
 				}
 				else
@@ -1040,11 +1044,15 @@ void FileProcess::ls(int parinoAddr) //显示当前目录下的所有文件和�
 		memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
 		//delete[] block_buf;
 		//输出该磁盘块中的所有目录项
-
+		Inode *tmp = new Inode();
 		for (int j = 0; j < 28 && i < cnt; j++)
 		{
-			Inode *tmp = new Inode();
 			//取出该目录项的inode，判断该目录项是目录还是文件
+			//在这里需要判断inode 是否已经释放
+			if (isFreeInode(dirlist[j].inode_addr))
+			{
+				continue;
+			}
 			readInode(tmp, dirlist[j].inode_addr);
 
 			if (strcmp(dirlist[j].itemName, "") == 0)
@@ -1096,13 +1104,60 @@ void FileProcess::ls(int parinoAddr) //显示当前目录下的所有文件和�
 			printf("\n");
 			i++;
 		}
+		delete tmp;
 	}
 	/*  未写完 */
 }
 
-void FileProcess::cd(int parinoAddr, char name[]) //进入当前目录下的name目录
+void FileProcess::cd(int parinoAddr, char name[], int type) //进入当前目录下的name目录
 {
+	char *temp_name = new char[128];
+	strcpy(temp_name, name);
+
 	//取出当前目录的inode
+	if (type == 1)
+	{
+		//绝对地址切换
+		int str_len = strlen(name);
+		if (name[str_len - 1] == '/' && str_len == 1)
+		{
+			//直接切换到绝对地址
+			g_current_dir_inode_addr = g_root_dir_inode_addr;
+			return;
+		}
+		int last_position = 0;
+		for (int i = str_len - 1; i > 0; i--)
+		{
+			if (name[str_len - 1] == '/' && i == str_len - 1)
+			{
+				i--;
+			}
+			else if (name[i] == '/')
+			{
+				last_position = i;
+				break;
+			}
+		}
+		//将进行字符串进行剪切
+		char *path = new char[128];
+		memset(path, 0, 128);
+		memcpy(path, name, last_position + 1);
+
+		memcpy(name, name + (last_position + 1), str_len - last_position - 1);
+		if (name[str_len - last_position - 2] == '/')
+		{
+			name[str_len - last_position - 2] = '\0';
+		}
+		name[str_len - last_position - 1] = '\0';
+
+		std::cout << path << std::endl;
+		std::cout << name << std::endl;
+		int file_inode_addr = locateFile(path, g_root_dir_inode_addr);
+		delete path;
+		parinoAddr = file_inode_addr;
+	}
+
+	//不一定找得到
 	Inode *cur = new Inode();
 	readInode(cur, parinoAddr);
 	//依次取出inode对应的磁盘块，查找有没有名字为name的目录项
@@ -1175,6 +1230,23 @@ void FileProcess::cd(int parinoAddr, char name[]) //进入当前目录下的name
 						}
 						//设置g_current_dir_inode_addr
 						g_current_dir_inode_addr = dirlist[j].inode_addr;
+						//需要重新设置目录名称
+						int counter = 0;
+						for (int i = strlen(g_current_dir_name) - 1; i >= 0; i--)
+						{
+							if (g_current_dir_name[i] == '/')
+							{
+								counter++;
+							}
+							if (counter == 2)
+							{
+								counter = i;
+								break;
+							}
+						}
+						//将字符串进行覆盖
+						memcpy(g_current_dir_name, g_current_dir_name, counter + 1);
+						g_current_dir_name[counter + 1] = '\0';
 					}
 					else
 					{
@@ -1182,11 +1254,18 @@ void FileProcess::cd(int parinoAddr, char name[]) //进入当前目录下的name
 						if (g_current_dir_name[strlen(g_current_dir_name) - 1] != '/')
 							strcat(g_current_dir_name, "/");
 						strcat(g_current_dir_name, dirlist[j].itemName);
+						if (g_current_dir_name[strlen(g_current_dir_name) - 1] != '/')
+							strcat(g_current_dir_name, "/");
 						//形成的格式大概为 g_current_dir_name/name
 						//设置当前inode地址
 						g_current_dir_inode_addr = dirlist[j].inode_addr;
 					}
-
+					if (type == 1)
+					{
+						strcpy(g_current_dir_name, temp_name);
+						if (g_current_dir_name[strlen(g_current_dir_name) - 1] != '/')
+							strcat(g_current_dir_name, "/");
+					}
 					return;
 				}
 				else
@@ -1240,11 +1319,11 @@ void FileProcess::sysEditFile(int file_inode_addr, char content[], int content_s
 				}
 
 				writeBlockFile(buf_4KB, new_block);
-				current_inode->i_dirBlock[file_blocks+i+1] = new_block;
+				current_inode->i_dirBlock[file_blocks + i + 1] = new_block;
 			}
 			//更新inode
 			current_inode->i_size += content_size_byte;
-			writeInode((char*)current_inode,file_inode_addr);
+			writeInode((char *)current_inode, file_inode_addr);
 		}
 		else
 		{
@@ -1257,11 +1336,11 @@ void FileProcess::sysEditFile(int file_inode_addr, char content[], int content_s
 				int position = current_inode->i_size % K_BLOCK_SIZE;
 				memcpy(buf_4KB + position, content, content_size_byte);
 				std::cout << buf_4KB << std::endl;
-				current_inode->i_size += content_size_byte;
+				//current_inode->i_size += content_size_byte;
 				writeBlockFile(buf_4KB, current_inode->i_dirBlock[file_blocks]);
 			}
 			current_inode->i_size += content_size_byte;
-			writeInode((char*)current_inode, file_inode_addr);
+			writeInode((char *)current_inode, file_inode_addr);
 		}
 	}
 	else if (edit_type == K_COVER_FILE)
@@ -1272,12 +1351,13 @@ void FileProcess::sysEditFile(int file_inode_addr, char content[], int content_s
 		if (content_size_byte <= K_BLOCK_SIZE * 12)
 		{
 			int file_blocks = content_size_byte / K_BLOCK_SIZE;
-			for(int i =0; i < file_blocks; i++) {
-				memcpy(buf_4KB, content+i*K_BLOCK_SIZE, K_BLOCK_SIZE);
+			for (int i = 0; i < file_blocks; i++)
+			{
+				memcpy(buf_4KB, content + i * K_BLOCK_SIZE, K_BLOCK_SIZE);
 				writeBlockFile(buf_4KB, current_inode->i_dirBlock[i]);
 			}
-			int left_byte_len = content_size_byte - file_blocks*K_BLOCK_SIZE;
-			memcpy(buf_4KB, content+file_blocks*K_BLOCK_SIZE, left_byte_len);
+			int left_byte_len = content_size_byte - file_blocks * K_BLOCK_SIZE;
+			memcpy(buf_4KB, content + file_blocks * K_BLOCK_SIZE, left_byte_len);
 
 			writeBlockFile(buf_4KB, current_inode->i_dirBlock[file_blocks]);
 		}
@@ -1298,6 +1378,10 @@ int FileProcess::locateFile(char path[], int current_inode_addr)
 	if (path[0] == '/')
 	{
 		current_inode_addr = g_root_dir_inode_addr;
+		if (strlen(path) == 1)
+		{
+			return g_root_dir_inode_addr;
+		}
 		counter_src++;
 		//绝对寻址
 	}
@@ -1312,6 +1396,7 @@ int FileProcess::locateFile(char path[], int current_inode_addr)
 		counter_src = 0;
 	}
 	char *name = new char[128];
+	memset(name, 0, 128);
 	while (true)
 	{
 		if (path[counter_src] != '/' && counter_src < len)
@@ -1322,7 +1407,7 @@ int FileProcess::locateFile(char path[], int current_inode_addr)
 		}
 		else
 		{
-			std::cout << "name is: " << counter_des << "bytes; " << name << std::endl;
+			std::cout << "name is: " << name << "bytes; " << name << std::endl;
 
 			if (counter_src == len)
 			{
@@ -1346,6 +1431,10 @@ int FileProcess::locateFile(char path[], int current_inode_addr)
 			{
 				counter_des = 0;
 				counter_src++; //“跳掉 /”
+				if (counter_src == len)
+				{
+					return current_inode_addr;
+				}
 			}
 		}
 	}

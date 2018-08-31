@@ -15,8 +15,10 @@ class UserMoudle {
 		bool logIn(std::string user_name, std::string user_passwd);
 		bool logOut();
 		bool deleteUser(std::string user_name);
+        bool isUserExit(std::string user_name);
 	private:
 		bool flag;
+
 		FileProcess* m_file_process;
 };
 

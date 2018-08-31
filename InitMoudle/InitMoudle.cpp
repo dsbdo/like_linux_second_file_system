@@ -16,7 +16,6 @@ int InitMoudle::initDisk()
 	initBlockBitMap();
 
 	m_file_process->loadBitMap();
-
 	createRootDir();
 	return 0;
 }
@@ -182,6 +181,11 @@ bool InitMoudle::createRootDir() {
 		std::cout << "********************test mkdir etc*************************" << std::endl;
 			m_file_process->testWriteInode(inode_addr);
 		    m_file_process->testWriteBlock(block_addr);
+			m_file_process->mkdir(g_root_dir_inode_addr, "dsbdo");
+			char buf[] = "/dsbdo";
+			
+			m_file_process->cd(0, buf, 1);
+			m_file_process->mkdir(g_current_dir_inode_addr, "helloWorld");
 
 			// m_file_process->ls(g_root_dir_inode_addr);
 			// m_file_process->cd(g_current_dir_inode_addr,"..");

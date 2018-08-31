@@ -24,6 +24,8 @@ class FileProcess {
 		
 		bool isFreeInode();
 		bool isFreeBlock();
+		//判断是否是空闲的inode
+		bool isFreeInode(int inode_addr);
 		
 		int allocInode();
 		int allocBlock();
@@ -47,7 +49,7 @@ class FileProcess {
 		bool create(int parent_inode_addr, char name[], char buf[], int size_byte);
 		bool del(int parent_inode_addr, char name[]);
 		void ls(int);
-		void cd(int, char name[]);
+		void cd(int, char name[], int type=0);
 		
 		//打开文件并编辑
 		void vi(int file_inode_addr);
