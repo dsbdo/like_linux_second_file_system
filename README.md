@@ -3,7 +3,8 @@ Do a personal operating system
 项目开发大概用了6天的时间，因为没有仔细debug，其中bug很多，拿来玩一玩还是很不错的。
 
 > 代码量统计如下,大概是2000行所有：
-![](./pictures/codeNum.png)
+
+>![](./pictures/codeNum.png)
 
 ## 该项目是实现了一个仿Linux 的二级文件系统，实现思路如下：
 1. 首先使用系统的dd命令创建一个大小为1G的空文件进行模拟磁盘；
@@ -75,38 +76,52 @@ superBlock的内容 | Inode Bitmap | Block Bitmap | Inode  | data block
 ## 代码具体运行情况截图：
 1. 初始化整个磁盘，在这个过程，经常出现文件读取权限的问题，所以建议先使用dd命令创建一个1G大小的空文件，然后文件命名为SystemDisk, 接着修改权限chmod 666 SystemDisk。该命令之后，需要输入两次1234， 作为root 用户登录密码，有想改的，可以自己到main.cpp 修改然后重新编译运行即可。
 > 初始化效果图如下， 其中同时运行了help命令
- ![](./pictures/help.png)
- 2. 使用new user命令创建一个用户,该过程便是在/etc/passwd 目录下增加一条用户的记录，同时在/home/目录下，创建一个用户名的目录
- > 创建用户结果图如下：
- ![](./pictures/new_user.png)
+>![](./pictures/help.png)
+2. 使用new user命令创建一个用户,该过程便是在/etc/passwd 目录下增加一条用户的记录，同时在/home/目录下，创建一个用户名的目录
+> 创建用户结果图如下：
  
- 3. 我们创建新用户之后，登录新用户,通过验证后，进入/home/user_name 的目录下
- > 登录效果图如下：
- ![](./pictures/login.png)
+> ![](./pictures/new_user.png)
+ 
+3. 我们创建新用户之后，登录新用户,通过验证后，进入/home/user_name 的目录下
+> 登录效果图如下：
+ 
+>![](./pictures/login.png)
 
 4. 接着尝试的是创建目录的命令，我们先提前进入到/home/目录下，使用mkdir dir 创建一个新的目录
 > 创建目录效果图如下：
-![](./pictures/mkdir.png)
+
+>![](./pictures/mkdir.png)
 5. 我们切换到新目录下，然后使用cd命令
 > 切换目录效果如图：
-![](./pictures/cd.png)
+
+>![](./pictures/cd.png)
 
 6. 使用ls命令，打印当前目录下的所有目录项
 > ls 命令如下，目前只能在ls 当前目录，不知ls dir的形式，效果图如下：
-![](./pictures/ls.png)
+
+>![](./pictures/ls.png)
 
 7. 创建目录成功后，我们使用rm 命令进行删除目录。
 > rm 目录目前仅能删除目录，范围仅限当前目录下的一个目录，效果如图
-![](./pictures/rm_dir.png)
+
+>![](./pictures/rm_dir.png)
+
 8. 我们创建一个空文件，create file_name,该命令仅能用来创建一个空文件
 >效果图如下：
-![](./pictures/create_file.png)
+
+>![](./pictures/create_file.png)
+
 9. 我们使用open 命令打开文件并以追加的形式写入文件（文件不存在便先创建文件）。open file_name < file_content。 同时我们测试read file_name 命令，也就是将一个文件进行读取，并将文件内容进行输出。
 > 效果图如下：
-![](./pictures/open_file_edit_and_read.png)
+
+>![](./pictures/open_file_edit_and_read.png)
+
 10. 以覆盖的形式打开文件并写入， 文件不存在则先创建文件。open file << content
-> 效果图如下：
-![](./pictures/cover_file.png)
+> open file << content 效果图如下：
+
+> ![](./pictures/cover_file.png)
+
 11. 最后一个命令是删除文件命令，del file_name
-> 效果图如下：
-![](./pictures/del_file.png)
+> del file_name 效果图如下：
+
+>![](./pictures/del_file.png)
