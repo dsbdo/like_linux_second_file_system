@@ -74,12 +74,13 @@ int main(int argc, char **argv)
 
 		int init_result = init_moudle.initDisk();
 		init_moudle.bootFileSystem();
+
 		user_moudle.createRootUser("1234");
-		user_moudle.createOrdinaryUser("dsbdo", "1234567");
+		//user_moudle.createOrdinaryUser("dsbdo", "1234567");
 
 		while (true)
 		{
-			cout << "请输入密码: ";
+			cout << "超级用户登录请输入密码: ";
 			string passwd = "";
 			cin >> passwd;
 			string repeat_passwd = "";
@@ -105,13 +106,6 @@ int main(int argc, char **argv)
 				cout << "两次密码输入不一致，请重新输入" << endl;
 			}
 		}
-
-		// user_moudle.createRootUser("1234");
-		// cout << "create ordinary user+++++++++++++++++++++++++++++++++" << endl;
-		// 
-		// cout << "user exit is: " << user_moudle.isUserExit("dsbdo") << endl;
-		// user_moudle.logIn("dsbdo", "1234567");
-		// cout << "go to next step++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 	}
 	while (1)
 	{

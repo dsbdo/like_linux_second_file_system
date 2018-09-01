@@ -17,3 +17,7 @@ CommandParse.o: ./CommandParse/CommandParse.cpp
 
 UserMoudle.o: ./UserMoudle/UserMoudle.cpp 
 	g++ -c ./UserMoudle/UserMoudle.cpp -g
+clean:
+	rm -rf *.o
+	rm -rf SystemDisk
+	rm -rf *.bin

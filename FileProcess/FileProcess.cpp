@@ -148,15 +148,15 @@ void FileProcess::loadBitMap()
 		m_inode_bitmap[i] = (bool)buf_4KB[i];
 	}
 
-	std::cout << "DEBUG loadBitmap print m_inode_bitmap check:   !!!" << std::endl;
-	for (int i = 0; i < 512; i++)
-	{
-		std::cout << m_inode_bitmap[i] << "|";
-		if ((i + 1) % 64 == 0)
-		{
-			std::cout << std::endl;
-		}
-	}
+	// std::cout << "DEBUG loadBitmap print m_inode_bitmap check:   !!!" << std::endl;
+	// for (int i = 0; i < 512; i++)
+	// {
+	// 	std::cout << m_inode_bitmap[i] << "|";
+	// 	if ((i + 1) % 64 == 0)
+	// 	{
+	// 		std::cout << std::endl;
+	// 	}
+	// }
 	//需要读K_BLOCK_NUM /(1024*4) 块
 	for (int i = 0; i < K_BLOCK_NUM / (1024 * 4); i++)
 	{
@@ -168,15 +168,15 @@ void FileProcess::loadBitMap()
 		}
 	}
 
-	std::cout << "m_block_bitmap check:   !!!" << std::endl;
-	for (int i = 0; i < 1024; i++)
-	{
-		std::cout << m_block_bitmap[i] << "|";
-		if ((i + 1) % 64 == 0)
-		{
-			std::cout << std::endl;
-		}
-	}
+	// std::cout << "m_block_bitmap check:   !!!" << std::endl;
+	// for (int i = 0; i < 1024; i++)
+	// {
+	// 	std::cout << m_block_bitmap[i] << "|";
+	// 	if ((i + 1) % 64 == 0)
+	// 	{
+	// 		std::cout << std::endl;
+	// 	}
+	// }
 }
 
 void FileProcess::loadSuperBlock()
@@ -431,7 +431,7 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 	readInode(current_inode, parent_inode_addr);
 
 	//testWriteInode(parent_inode_addr);
-	std::cout << "DEBUG test in call mkdir function: " << current_inode->i_Inode_num << std::endl;
+	//std::cout << "DEBUG test in call mkdir function: " << current_inode->i_Inode_num << std::endl;
 
 	int dir_item_cnt = 0; //遍历到第几个目录item
 	//目录项数 +1
@@ -491,8 +491,8 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 					//记录这个位置
 					if (posi == -1)
 					{
-						std::cout << "DEBUG::FILEPROCESS::mkdir dir 471 block position: " << current_inode->i_dirBlock[dir_block_num] << std::endl;
-						std::cout << "DEBUG::FILEPROCESS::mkdir dir 472 item position: " << j << std::endl;
+						//std::cout << "DEBUG::FILEPROCESS::mkdir dir 471 block position: " << current_inode->i_dirBlock[dir_block_num] << std::endl;
+						//std::cout << "DEBUG::FILEPROCESS::mkdir dir 472 item position: " << j << std::endl;
 						posi = current_inode->i_dirBlock[dir_block_num];
 						posj = j;
 						break;
@@ -526,10 +526,6 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 
 			readBlock(buf_4KB, posi);
 			memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
-			for (int debug_i = 0; debug_i < 28; debug_i++)
-			{
-				std::cout << "DEBUG::FILEPROCESS::mkdir 505 dirlist: dir_name:" << dirlist[debug_i].itemName << " |||dir->inode is: " << dirlist[debug_i].inode_addr << std::endl;
-			}
 		}
 
 		//创建目录名
@@ -543,10 +539,6 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 		}
 		dirlist[posj].inode_addr = child_dir_inode_addr;
 
-		for (int debug_i = 0; debug_i < 28; debug_i++)
-		{
-			std::cout << "DEBUG::FILEPROCESS::mkdir 521 dirlist: dir_name:" << dirlist[debug_i].itemName << " |||dir->inode is: " << dirlist[debug_i].inode_addr << std::endl;
-		}
 		//为新目录分配inode
 		Inode *new_dir_inode = new Inode();
 		new_dir_inode->i_Inode_num = child_dir_inode_addr;
@@ -573,9 +565,9 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 
 		//写入磁盘块
 		writeBlockFile((char *)dirlist2, child_dir_block_addr, K_BLOCK_SIZE);
-		std::cout << "DEBUG::FILEPROCESS::mkdir 545 testWriteBlock start$$$$$$$$$$$$$$$$$$$$" << std::endl;
-		testWriteBlock(child_dir_block_addr);
-		std::cout << "DEBUG::FILEPROCESS::mkdir 545 testWriteBlock over$$$$$$$$$$$$$$$$$$$$$" << std::endl;
+		// std::cout << "DEBUG::FILEPROCESS::mkdir 545 testWriteBlock start$$$$$$$$$$$$$$$$$$$$" << std::endl;
+		// testWriteBlock(child_dir_block_addr);
+		// std::cout << "DEBUG::FILEPROCESS::mkdir 545 testWriteBlock over$$$$$$$$$$$$$$$$$$$$$" << std::endl;
 
 		new_dir_inode->i_dirBlock[0] = child_dir_block_addr;
 		for (int k = 1; k < 12; k++)
@@ -587,26 +579,11 @@ bool FileProcess::mkdir(int parent_inode_addr, const char dir_name[])
 		new_dir_inode->i_mode = MODE_DIR | DIR_DEF_PERMISSION;
 		//将inode 进行写入
 		writeInode((char *)new_dir_inode, child_dir_inode_addr);
-		std::cout << "DEBUG::FILEPROCESS::mkdir 559 testWriteInode start$$$$$$$$$$$$$$$$$$$$" << std::endl;
-		testWriteInode(child_dir_inode_addr);
-		std::cout << "DEBUG::FILEPROCESS::mkdir 559 testWriteInode over$$$$$$$$$$$$$$$$$$$$$" << std::endl;
-		//将当前块写回
 
-		for (int debug_i = 0; debug_i < 28; debug_i++)
-		{
-			std::cout << "DEBUG::FILEPROCESS::mkdir 570 dirlist: dir_name:" << dirlist[debug_i].itemName << " |||dir->inode is: " << dirlist[debug_i].inode_addr << std::endl;
-		}
 		writeBlockFile((char *)dirlist, posi, K_BLOCK_SIZE);
-		std::cout << "DEBUG::FILEPROCESS::mkdir 566 testWriteBlock parent_block start$$$$$$$$$$$$$$$$$$$$" << std::endl;
-		testWriteBlock(posi);
-		std::cout << "DEBUG::FILEPROCESS::mkdir 566 testWriteBlock parent_block over$$$$$$$$$$$$$$$$$$$$$" << std::endl;
-		//将当前inode 进行写回
+
 		current_inode->i_counter++;
 		writeInode((char *)current_inode, parent_inode_addr);
-
-		std::cout << "DEBUG::FILEPROCESS::mkdir 572 testWriteInode parent_inode_addr start$$$$$$$$$$$$$$$$$$$$" << std::endl;
-		testWriteInode(parent_inode_addr);
-		std::cout << "DEBUG::FILEPROCESS::mkdir 572 testWriteInode parent_inode_addr over$$$$$$$$$$$$$$$$$$$$$" << std::endl;
 		return true;
 	}
 	else
@@ -743,10 +720,10 @@ bool FileProcess::rmdir(int parinoAddr, char name[]) //目录删除函数
 					//删除该目录条目，写回磁盘
 					strcpy(dirlist[j].itemName, "");
 					dirlist[j].inode_addr = -1;
-					writeBlockFile((char*)dirlist, parblockAddr);
+					writeBlockFile((char *)dirlist, parblockAddr);
 					memcpy(dirlist, buf_4KB, sizeof(DirItem) * 28);
 					cur->i_counter--;
-					writeInode((char*)cur, parinoAddr);
+					writeInode((char *)cur, parinoAddr);
 
 					return true;
 				}
@@ -1150,8 +1127,8 @@ void FileProcess::cd(int parinoAddr, char name[], int type) //进入当前目录
 		}
 		name[str_len - last_position - 1] = '\0';
 
-		std::cout << path << std::endl;
-		std::cout << name << std::endl;
+		// std::cout << path << std::endl;
+		// std::cout << name << std::endl;
 		int file_inode_addr = locateFile(path, g_root_dir_inode_addr);
 		delete path;
 		parinoAddr = file_inode_addr;
@@ -1335,7 +1312,7 @@ void FileProcess::sysEditFile(int file_inode_addr, char content[], int content_s
 				readBlock(buf_4KB, current_inode->i_dirBlock[file_blocks]);
 				int position = current_inode->i_size % K_BLOCK_SIZE;
 				memcpy(buf_4KB + position, content, content_size_byte);
-				std::cout << buf_4KB << std::endl;
+				//std::cout << buf_4KB << std::endl;
 				//current_inode->i_size += content_size_byte;
 				writeBlockFile(buf_4KB, current_inode->i_dirBlock[file_blocks]);
 			}
@@ -1361,6 +1338,8 @@ void FileProcess::sysEditFile(int file_inode_addr, char content[], int content_s
 
 			writeBlockFile(buf_4KB, current_inode->i_dirBlock[file_blocks]);
 		}
+		current_inode->i_size += content_size_byte;
+		writeInode((char *)current_inode, file_inode_addr);
 	}
 
 	delete current_inode;
@@ -1501,136 +1480,137 @@ int FileProcess::locateFileHelp(char name[], int inode_addr, int name_len, int l
 
 void FileProcess::testWriteBlock(int block_addr, int type)
 {
-	disk_head.seekg(block_addr * K_BLOCK_SIZE, std::ios::beg);
-	disk_head.read(buf_4KB, K_BLOCK_SIZE);
-	if (type == 1)
-	{
-		std::cout << "size of(DirItem): " << sizeof(DirItem) << std::endl;
-		char *buf = new char[sizeof(DirItem)];
-		for (int i = 0; i < 16; i++)
-		{
-			for (int j = 0; j < sizeof(DirItem); j++)
-			{
-				buf[j] = buf_4KB[i * sizeof(DirItem) + j];
-			}
-			DirItem *temp = (DirItem *)buf;
-			std::cout << "DEBUG::FILEPROCESS::testWriteBLock 1084 temp ->inode_addr： " << temp->inode_addr << std::endl;
-			std::cout << "DEBUG::FILEPROCESS::testWriteBLock 1084 temp -> itemName: " << temp->itemName << std::endl;
-		}
-	}
-	else if (type == 2)
-	{
-		//检查写文件内容
-		std::cout << "\033[1;32m"
-				  << "DEBUG::FILEPROCESS::testwriteFile:: "
-				  << "\033[0m" << buf_4KB << std::endl;
-	}
+	// disk_head.seekg(block_addr * K_BLOCK_SIZE, std::ios::beg);
+	// disk_head.read(buf_4KB, K_BLOCK_SIZE);
+	// if (type == 1)
+	// {
+	// 	std::cout << "size of(DirItem): " << sizeof(DirItem) << std::endl;
+	// 	char *buf = new char[sizeof(DirItem)];
+	// 	for (int i = 0; i < 16; i++)
+	// 	{
+	// 		for (int j = 0; j < sizeof(DirItem); j++)
+	// 		{
+	// 			buf[j] = buf_4KB[i * sizeof(DirItem) + j];
+	// 		}
+	// 		DirItem *temp = (DirItem *)buf;
+	// 		std::cout << "DEBUG::FILEPROCESS::testWriteBLock 1084 temp ->inode_addr： " << temp->inode_addr << std::endl;
+	// 		std::cout << "DEBUG::FILEPROCESS::testWriteBLock 1084 temp -> itemName: " << temp->itemName << std::endl;
+	// 	}
+	// }
+	// else if (type == 2)
+	// {
+	// 	//检查写文件内容
+	// 	std::cout << "\033[1;32m"
+	// 			  << "DEBUG::FILEPROCESS::testwriteFile:: "
+	// 			  << "\033[0m" << buf_4KB << std::endl;
+	// }
+	return ;
 }
 
 bool FileProcess::testWriteResult()
 {
-	disk_head.seekg(0, std::ios::beg);
-	char buf[1024 * 4];
-	disk_head.read(buf, 1024 * 4);
-	SuperBlock *super = (SuperBlock *)&buf;
-	std::cout << "super->s_block_num: " << super->s_block_num << std::endl;
-	std::cout << "super->s_block_size : " << super->s_block_size << std::endl;
-	std::cout << "super->s_blockBitmap_startAddr: " << super->s_blockBitmap_startAddr << std::endl;
-	using std::cout;
-	using std::endl;
-	cout << " super->s_blocks_per_group " << super->s_blocks_per_group << endl;
-	cout << "super->s_data_block_startAddr: " << super->s_data_block_startAddr << endl;
-	cout << "super->s_free_data_block_addr " << super->s_free_data_block_addr << endl;
-	cout << "super->s_free_Inode_num: " << super->s_free_Inode_num << endl;
-	cout << "super->s_Inode_size: " << super->s_Inode_size << endl;
-	cout << "super->s_Inode_startAddr: " << super->s_Inode_startAddr << endl;
-	cout << "super->s_InodeBitmap_startAddr: " << super->s_InodeBitmap_startAddr << endl;
-	cout << "super->s_superblock_size: " << super->s_superblock_size << endl;
-	cout << "super->s_superblock_startAddr: " << super->s_superblock_startAddr << endl;
+	// disk_head.seekg(0, std::ios::beg);
+	// char buf[1024 * 4];
+	// disk_head.read(buf, 1024 * 4);
+	// SuperBlock *super = (SuperBlock *)&buf;
+	// std::cout << "super->s_block_num: " << super->s_block_num << std::endl;
+	// std::cout << "super->s_block_size : " << super->s_block_size << std::endl;
+	// std::cout << "super->s_blockBitmap_startAddr: " << super->s_blockBitmap_startAddr << std::endl;
+	// using std::cout;
+	// using std::endl;
+	// cout << " super->s_blocks_per_group " << super->s_blocks_per_group << endl;
+	// cout << "super->s_data_block_startAddr: " << super->s_data_block_startAddr << endl;
+	// cout << "super->s_free_data_block_addr " << super->s_free_data_block_addr << endl;
+	// cout << "super->s_free_Inode_num: " << super->s_free_Inode_num << endl;
+	// cout << "super->s_Inode_size: " << super->s_Inode_size << endl;
+	// cout << "super->s_Inode_startAddr: " << super->s_Inode_startAddr << endl;
+	// cout << "super->s_InodeBitmap_startAddr: " << super->s_InodeBitmap_startAddr << endl;
+	// cout << "super->s_superblock_size: " << super->s_superblock_size << endl;
+	// cout << "super->s_superblock_startAddr: " << super->s_superblock_startAddr << endl;
 	return true;
 }
 
 void FileProcess::testWriteInode(int inode_addr)
 {
-	using std::cout;
-	using std::endl;
-	using std::ios;
-	disk_head.seekg(K_INODE_STARTADDR * K_BLOCK_SIZE + inode_addr * K_INODE_SIZE, ios::beg);
-	char buf[K_INODE_SIZE];
-	disk_head.read(buf, sizeof(Inode));
-	cout << "Inode size: " << sizeof(Inode) << endl;
-	Inode *temp_inode = (Inode *)buf;
-	cout << "i_Inode_num: " << temp_inode->i_Inode_num << endl;
-	cout << "i_mode: " << temp_inode->i_mode << endl;
-	cout << "i_counter: " << temp_inode->i_counter << endl;
-	cout << "i_uname: " << temp_inode->i_uname << endl;
-	cout << "i_gname: " << temp_inode->i_gname << endl;
-	cout << "i_size: " << temp_inode->i_size << endl;
-	cout << "i_ctime: " << temp_inode->i_ctime << endl;
-	cout << "i_mtime: " << temp_inode->i_mtime << endl;
-	cout << "i_atime: " << temp_inode->i_atime << endl;
-	for (int i = 0; i < 12; i++)
-	{
-		cout << "i_dirBlock[" << i << "]" << temp_inode->i_dirBlock[i] << endl;
-	}
+	// using std::cout;
+	// using std::endl;
+	// using std::ios;
+	// disk_head.seekg(K_INODE_STARTADDR * K_BLOCK_SIZE + inode_addr * K_INODE_SIZE, ios::beg);
+	// char buf[K_INODE_SIZE];
+	// disk_head.read(buf, sizeof(Inode));
+	// cout << "Inode size: " << sizeof(Inode) << endl;
+	// Inode *temp_inode = (Inode *)buf;
+	// cout << "i_Inode_num: " << temp_inode->i_Inode_num << endl;
+	// cout << "i_mode: " << temp_inode->i_mode << endl;
+	// cout << "i_counter: " << temp_inode->i_counter << endl;
+	// cout << "i_uname: " << temp_inode->i_uname << endl;
+	// cout << "i_gname: " << temp_inode->i_gname << endl;
+	// cout << "i_size: " << temp_inode->i_size << endl;
+	// cout << "i_ctime: " << temp_inode->i_ctime << endl;
+	// cout << "i_mtime: " << temp_inode->i_mtime << endl;
+	// cout << "i_atime: " << temp_inode->i_atime << endl;
+	// for (int i = 0; i < 12; i++)
+	// {
+	// 	cout << "i_dirBlock[" << i << "]" << temp_inode->i_dirBlock[i] << endl;
+	// }
 
-	cout << "i_indirBlock_1: " << temp_inode->i_indirBlock_1 << endl;
-	//读出位图
-	cout << "Inode is： " << inode_addr << endl;
-	disk_head.seekg(K_INODE_BITMAP_STARTADDR * K_BLOCK_SIZE, ios::beg);
-	disk_head.read(buf_4KB, 512);
+	// cout << "i_indirBlock_1: " << temp_inode->i_indirBlock_1 << endl;
+	// //读出位图
+	// cout << "Inode is： " << inode_addr << endl;
+	// disk_head.seekg(K_INODE_BITMAP_STARTADDR * K_BLOCK_SIZE, ios::beg);
+	// disk_head.read(buf_4KB, 512);
 
-	for (int i = 0; i < 512; i++)
-	{
-		cout << (int)buf_4KB[i] << " ";
-		if ((i + 1) % 64 == 0)
-		{
-			cout << endl;
-		}
-	}
+	// for (int i = 0; i < 512; i++)
+	// {
+	// 	cout << (int)buf_4KB[i] << " ";
+	// 	if ((i + 1) % 64 == 0)
+	// 	{
+	// 		cout << endl;
+	// 	}
+	// }
 
-	cout << "检查block bitmap： ——————————————————————" << endl;
-	disk_head.seekg(K_BLOCK_BITMAP_STARTADDR * K_BLOCK_SIZE, ios::beg);
-	disk_head.read(buf_4KB, 512);
+	// cout << "检查block bitmap： ——————————————————————" << endl;
+	// disk_head.seekg(K_BLOCK_BITMAP_STARTADDR * K_BLOCK_SIZE, ios::beg);
+	// disk_head.read(buf_4KB, 512);
 
-	for (int i = 0; i < 512; i++)
-	{
-		cout << (int)buf_4KB[i] << " ";
-		if ((i + 1) % 64 == 0)
-		{
-			cout << endl;
-		}
-	}
+	// for (int i = 0; i < 512; i++)
+	// {
+	// 	cout << (int)buf_4KB[i] << " ";
+	// 	if ((i + 1) % 64 == 0)
+	// 	{
+	// 		cout << endl;
+	// 	}
+	// }
 }
 
 void FileProcess::coutBitmap()
 {
-	using std::cout;
-	using std::endl;
-	using std::ios;
-	cout << "检查 Inode bitmap： ××××××××××××××××" << endl;
-	disk_head.seekg(K_INODE_BITMAP_STARTADDR * K_BLOCK_SIZE, ios::beg);
-	disk_head.read(buf_4KB, 512);
+	// using std::cout;
+	// using std::endl;
+	// using std::ios;
+	// cout << "检查 Inode bitmap： ××××××××××××××××" << endl;
+	// disk_head.seekg(K_INODE_BITMAP_STARTADDR * K_BLOCK_SIZE, ios::beg);
+	// disk_head.read(buf_4KB, 512);
 
-	for (int i = 0; i < 512; i++)
-	{
-		cout << (int)buf_4KB[i] << " ";
-		if ((i + 1) % 64 == 0)
-		{
-			cout << endl;
-		}
-	}
+	// for (int i = 0; i < 512; i++)
+	// {
+	// 	cout << (int)buf_4KB[i] << " ";
+	// 	if ((i + 1) % 64 == 0)
+	// 	{
+	// 		cout << endl;
+	// 	}
+	// }
 
-	cout << "检查block bitmap： ——————————————————————" << endl;
-	disk_head.seekg(K_BLOCK_BITMAP_STARTADDR * K_BLOCK_SIZE, ios::beg);
-	disk_head.read(buf_4KB, 512);
+	// cout << "检查block bitmap： ——————————————————————" << endl;
+	// disk_head.seekg(K_BLOCK_BITMAP_STARTADDR * K_BLOCK_SIZE, ios::beg);
+	// disk_head.read(buf_4KB, 512);
 
-	for (int i = 0; i < 512; i++)
-	{
-		cout << (int)buf_4KB[i] << " ";
-		if ((i + 1) % 64 == 0)
-		{
-			cout << endl;
-		}
-	}
+	// for (int i = 0; i < 512; i++)
+	// {
+	// 	cout << (int)buf_4KB[i] << " ";
+	// 	if ((i + 1) % 64 == 0)
+	// 	{
+	// 		cout << endl;
+	// 	}
+	// }
 }
