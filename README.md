@@ -1,5 +1,4 @@
-# littleOS
-Do a personal operating system
+# Like Linux second file system
 项目开发大概用了6天的时间，因为没有仔细debug，其中bug很多，拿来玩一玩还是很不错的。
 
 > 代码量统计如下,大概是2000行所有：
