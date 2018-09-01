@@ -1,7 +1,7 @@
 # littleOS
 Do a personal operating system
 项目开发大概用了6天的时间，因为没有仔细debug，其中bug很多，拿来玩一玩还是很不错的。
-代码量统计如下：
+> 代码量统计如下：
 ![](./pictures/codeNum.png)
 ## 该项目是实现了一个仿Linux 的二级文件系统，实现思路如下：
 1. 首先使用系统的dd命令创建一个大小为1G的空文件进行模拟磁盘；
